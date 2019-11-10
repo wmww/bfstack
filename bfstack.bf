@@ -21,16 +21,19 @@ each word will be a 1 followed by four 0s
 the last word of padding before the data stack has two 1s followed by three 0s so we can detect stack overflows
 +>+>>>>
 
-prep to call main
-+>+
+set the landing pad to 2
+++
+
+enter the main loop
+>+
 
 [-
 
-main <[-
-    sub_2 { >>>++<<< }
->+<]>[>]<
+main <[-[-
+    sub_2 { >>++<< }
+]+>]
 
-sub_1 <[-
+sub_1 <[-[-
     ++++++++++
     ++++++++++
     ++++++++++
@@ -38,10 +41,10 @@ sub_1 <[-
     ++++++++
     .
     [-]
-    sub_2 { >>>++<<< }
->+<]>[>]<
+    sub_2 { >>++<< }
+]+>]
 
-sub_2 <[-
+sub_2 <[-[-
     ++++++++++
     ++++++++++
     ++++++++++
@@ -51,10 +54,14 @@ sub_2 <[-
     +++++
     .
     [-]
-    sub_1 { >>>+<<< }
->+<]>[>]<
+    sub_1 { >>+<< }
+]+>]
 
-<+>->>
-[-[->+<]>]<<+
+set the landing pad back to 2
+<+
+
+walk away from the landing pad far enough for the correct subroutine to trigger
+>>
+[-[->+<]>]<+
 
 ]
