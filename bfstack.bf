@@ -1,257 +1,93 @@
 [
-This program was built with BFStak v0.1 (https://github.com/wmww/bfstack)
+This program was built with BFStak v0.2 (https://github.com/wmww/bfstack)
 It should run in any standard Brainfuck environment
 ]
 
-[
-S: call ID
-D: data in the data stack
-`: the current cell
-:cell:: the padding between words
-]
+N: namespace
+S: subroutine
+L: label (withing subroutine)
 
-make some room
->>>>>>>>>
+the bottom of the call stack will be halt (0::0::0)
+>>>
 
-0 0 0 0 :0: 0 0 0 0 :`0:
+call main (1::1::0)
++>+>>
 
-make 25 stack frames for the call stack
->++++++++++[-<+>]<
-[-[->>>>>+<<<<<]+>>>>>]
+0 0 0 1 1 1 `0
 
-the last word before the data stack starts has a 1 to detect stack overflows
-+>+>>>>
+start the loop on S
+<<[>>
 
-:1: 1 0 0 0 :`0:
+N S L `0 0 0
 
-set landing pad to 2 and enter the main loop
-++>+[-
+bump L
+<+>
 
-============================== BEGIN SUBROUTINES ===============================
+copy namespace without loosing original
+<<<[->>>+>+<<<<]>>>>[-<<<<+>>>>]<
 
-main <[-[>
-    sub_1 { + } >>>>>
-    sub_4 { ++++ } >>>>>
-    sub_2 { ++ } >>>>>
-    sub_3 { +++ } >>>>>
-]+>]
+N S L `N 0
 
-sub_1 <[-[>
-    ++++++++++
-    ++++++++++
-    ++++++++++
-    ++++++++++
-    +++++++++
-    .
-    [-]
-]+>]
+std(1)
+NAMESPACE{ open{ [[->+<]+>-[[->+<]<->]<[- }; copy_S{ <<[->>+>+<<<]>>>[-<<<+>>>]< } }
 
-sub_2 <[-[>
-    ++++++++++
-    ++++++++++
-    ++++++++++
-    ++++++++++
-    ++++++++++
-    .
-    [-]
-]+>]
-
-sub_3 <[-[>
-    ++++++++++
-    ++++++++++
-    ++++++++++
-    ++++++++++
-    ++++++++++
-    +
-    .
-    [-]
-    sub_2 { ++ } >>>>>
-]+>]
-
-sub_4 <[-[>
-    sub_3 { +++ } >>>>>
-    sub_2 { ++ } >>>>>
-    sub_1 { + } >>>>>
-]+>]
-
-=============================== END SUBROUTINES ================================
-
-D D D D :1: 1 `0 0 0
-||
-S 0 0 0 :0: 1 `0 0 0
-
-clear the inhibitor byte (one to the right of the flag for the last stack frame)
-<[-]<
-
-D D D D :`1: 0 0 0 0
-||
-S 0 0 0 :`0: 0 0 0 0
-
-if there is no subroutine invoked pop one off the call stack
-[
-    data_stack :1: D D D D :`1: 0 0 0 0
-
-    [<<<<<]
-
-    call_stack :0: 0 0 0 S :`0: 0 0 0 0 :1:
-
-    <[->+<]>>>>>>
-
-    call_stack :0: 0 0 0 0 :S: 0 0 0 0 :`1:
-
-    haul it up to the front of the data stack
-    [
-        -<<<<<
-        [->>>>>+<<<<<]
-        +>>>>>>>>>>
-    ]
-
-    data_stack :1: D D D D :S: 0 0 0 0 :`0:
-
-    <<<<<
-    [->+<]
-    +>>>>>
-
-    data_stack :1: D D D D :1: S 0 0 0 :`0:
-]
-
-S 0 0 0 :`0: 0 0 0 0
-
-<+
-
-D D D D :1: S 0 0 `1
-||
-S 0 0 0 :0: S 0 0 `1
-
-[
-    S 0 0 `1
-
-    move the call ID to the right of the word
-    -<<<[->>>+<<<]
-
-    D D D D :1: `0 0 0 S
-    ||
-    S 0 0 0 :0: `0 0 0 S
-
-    +<[->-<]+>
-
-    D D D D :1: `0 0 0 S
-    ||
-    S 0 0 0 :1: `1 0 0 S
-
-    [<<+<]>
-
-    D D D D :1: 0 `0 0 S
-    ||
-    S 0 0 `1 :1: 1 0 0 S
-]
-
-D D D D :1: 0 `0 0 S :1|0:
-
-run to the end of the subroutine invoking stack frames
->>>[>>>>>]<<<<
-
-:1: `0|1 0 0 S :0:
-
-push all subroutines but the one to invoke next to the call stack
-
-while this is not the left most subroutine
-[
-    :1: 0|1 0 0 S :1: `1 0 0 S :0:
-
-    -<->>>>
-    [-<<<<+>>>>]
-    <<<<<<<<<
-
-    :1: 0|1 0 0 S :S: 0 0 0 0 :0:
-
-    haul the call ID all the way back to the call stack
-    [
-        ->>>>>
-        [-<<<<<+>>>>>]
-        +<<<<<<<<<<
-    ]
-
-    call_stack :`0: 0 0 0 0 :S: 0 0 0 0 :1:
-
-    >>>>>
-    [-<+>]
-
-    call_stack :0: 0 0 0 S :`0: 0 0 0 0 :1:
-
-    >>>>>
-
-    :`1: 0|1 0 0 0 :1: data_stack
-
-    if we have a stack overflow
-    >[
-        :1: `1 0 0 0 :1: data_stack
-
-        [-]
-
-        "\nSTACK_OVERFLOW"
+    main(1)
+    SUBROUTINE{ open{ [[->+<]+>-[[->+<]<->]<[- }; copy_L{ <[->+>+<<]>>[-<<+>>]< }; open{ [[->+<]+>-[[->+<]<->]<[- } }
         ++++++++++
+        ++++++++++
+        ++++++++++
+        ++++++++++
+        +++++++++
         .
+        [-]
+        std{ + } > print_A{ ++ } >>
+        INVOKE{ close{ ]]>>[-<<+>>]<< }; open{ [[->+<]+>-[[->+<]<->]<[- } }
         ++++++++++
         ++++++++++
         ++++++++++
-        ++++++++++
-        ++++++++++
-        ++++++++++
-        ++++++++++
-        +++.
-        +.
-        ----------
-        ---------.
-        ++.
-        ++++++++.
         ++++++++++
         ++++++++++
         .
-        ----------
-        ------.
-        +++++++.
-        ----------
-        -------.
-        ++++++++++
-        +++.
-        ----------
-        --.
-        ++++++.
-        +++.
-        ++++++++.
         [-]
+    DONE{ pop{ <[-]<[-]<[-] }; close{ ]]>>[-<<+>>]<< }; close{ ]]>>[-<<+>>]<< } }
 
-        get into empty space past the data stack to halt
-        <[>>>>>]>>>>>
-    ]<
-    else
-    [
-        :`1: 0 0 0 0 :1: data_stack
+    print_A(2)
+    SUBROUTINE{ open{ [[->+<]+>-[[->+<]<->]<[- }; copy_L{ <[->+>+<<]>>[-<<+>>]< }; open{ [[->+<]+>-[[->+<]<->]<[- } }
+        ++++++++++
+        ++++++++++
+        ++++++++++
+        ++++++++++
+        ++++++++++
+        ++++++++++
+        +++++
+        .
+        [-]
+        other{ ++ } > print_BBB{ + } >>
+        INVOKE{ close{ ]]>>[-<<+>>]<< }; open{ [[->+<]+>-[[->+<]<->]<[- } }
+    DONE{ pop{ <[-]<[-]<[-] }; close{ ]]>>[-<<+>>]<< }; close{ ]]>>[-<<+>>]<< } }
 
-        [>>>>>]
+NAMESPACE_DONE{ close{ ]]>>[-<<+>>]<< } }
 
-        :1: 0|1 0 0 S :1: 0 0 0 0 :`0:
+other(2)
+NAMESPACE{ open{ [[->+<]+>-[[->+<]<->]<[- }; copy_S{ <<[->>+>+<<<]>>>[-<<<+>>>]< } }
 
-        <<<<<-
+    print_BBB(1)
+    SUBROUTINE{ open{ [[->+<]+>-[[->+<]<->]<[- }; copy_L{ <[->+>+<<]>>[-<<+>>]< }; open{ [[->+<]+>-[[->+<]<->]<[- } }
+        ++++++++++
+        ++++++++++
+        ++++++++++
+        ++++++++++
+        ++++++++++
+        ++++++++++
+        ++++++
+        ...
+        [-]
+        INVOKE{ close{ ]]>>[-<<+>>]<< }; open{ [[->+<]+>-[[->+<]<->]<[- } }
+    DONE{ pop{ <[-]<[-]<[-] }; close{ ]]>>[-<<+>>]<< }; close{ ]]>>[-<<+>>]<< } }
 
-        :1: 0|1 0 0 S :`0: 0 0 0 0 :0:
-    ]
+NAMESPACE_DONE{ close{ ]]>>[-<<+>>]<< } }
 
-    <<<<
-]
+subroutine_private_data N S `L 0 0 0 argument_data
 
-D D D D :1: `0 0 0 S :0:
-
-<+>>>>
-
-D D D D :2: 0 0 0 `S :0:
-
-if the call ID is not 0 (halt)
-[
-    walk away from the landing pad far enough for the correct subroutine to trigger
-    [-[->+<]>]<<<+<
-]>
-
-D D D D :2: call_id_0s `1
-]
+end the loop on S
+<<]<
