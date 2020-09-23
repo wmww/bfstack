@@ -47,7 +47,7 @@ class Assertion(Instruction):
     def run(self, program: Program):
         if program.tape.get_position() < self._current_offset:
             raise FailedError(self, None, 'Too far left')
-        actual = [program.tape.get_value_relative(i - self._current_offset) for i in range(len(self._cells))]
+        actual = [program.tape.get_value(i - self._current_offset) for i in range(len(self._cells))]
         for i, cell in enumerate(self._cells):
             if not cell.matches(actual[i]):
                 raise FailedError(self, actual, None)

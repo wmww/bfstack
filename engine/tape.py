@@ -22,7 +22,7 @@ class Tape:
     def get_position(self) -> int:
         return self._position
 
-    def get_value_relative(self, offset: int) -> int:
+    def get_value(self, offset: int) -> int:
         i = self._position + offset
         if i < 0:
             raise TooFarLeftError()
@@ -31,7 +31,7 @@ class Tape:
         else:
             return self._data[i]
 
-    def set_value_relative(self, offset: int, value: int):
+    def set_value(self, offset: int, value: int):
         value = value % 256
         i = self._position + offset
         if i < 0:
@@ -39,9 +39,6 @@ class Tape:
         while i >= len(self._data):
             self._data.append(0)
         self._data[i] = value
-
-    def increment_by(self, value: int):
-        self.set_value_relative(0, self.get_value_relative(0) + value)
 
     def move_by(self, delta: int):
         if -delta > self._position:

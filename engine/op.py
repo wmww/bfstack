@@ -13,22 +13,30 @@ class Op(Instruction):
     def __str__(self):
         return self.op + ' @ ' + str(self._line) + ':' + str(self._col)
 
+    def __eq__(self, other):
+        if isinstance(other, Op):
+            return self._op == other._op
+        elif isinstance(other, str):
+            return self._op == other
+        else:
+            return False
+
     def run(self, program: Program):
         op = self._op
         if op == '+':
-            program.tape.increment_by(1)
+            program.tape.set_value(0, program.tape.get_value(0) + 1)
         elif op == '-':
-            program.tape.increment_by(-1)
+            program.tape.set_value(0, program.tape.get_value(0) - 1)
         elif op == '>':
             program.tape.move_by(1)
         elif op == '<':
             program.tape.move_by(-1)
         elif op == '.':
-            program.send_output(chr(program.tape.get_value_relative(0)))
+            program.send_output(chr(program.tape.get_value(0)))
         elif op == ',':
-            program.tape.set_value_relative(0, ord(program.get_input()))
+            program.tape.set_value(0, ord(program.get_input()))
         elif op == '[':
-            if program.tape.get_value_relative(0):
+            if program.tape.get_value(0):
                 program.stack.append(program.current)
             else:
                 level = 1
@@ -42,7 +50,7 @@ class Op(Instruction):
         elif op == ']':
             if not program.stack:
                 raise RuntimeError('Unmatched \']\'')
-            if program.tape.get_value_relative(0):
+            if program.tape.get_value(0):
                 program.current = program.stack[-1]
             else:
                 program.stack.pop()

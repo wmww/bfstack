@@ -5,6 +5,7 @@ from source_file import SourceFile
 from program import Program
 from tape import Tape
 import parse
+import optimize
 
 import sys
 import logging
@@ -26,6 +27,8 @@ def main():
     args = Args(sys.argv)
     source_file = SourceFile(args.source_path())
     code = parse.source(source_file, args)
+    if args.optimize():
+        optimize.optimize(code)
     program = Program(Tape(0, []), code, output_fn, input_fn)
     while program.iteration():
         pass
