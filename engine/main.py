@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 
-import args
+from args import Args
+from source_file import SourceFile
+from program import Program
+from tape import Tape
 import parse
-import engine
 
 import sys
 import logging
@@ -21,11 +23,11 @@ def input_fn() -> str:
     return input_buffer.pop(0)
 
 def main():
-    arguments = args.Args(sys.argv)
-    source_file = arguments.load_source_file()
-    sections = parse.source_file(source_file)
-    eng = engine.Engine(engine.Tape(0, []), sections, output_fn, input_fn)
-    while eng.iteration():
+    arguments = Args(sys.argv)
+    source_file = SourceFile(arguments.source_path())
+    code = parse.source(source_file)
+    program = Program(Tape(0, []), code, output_fn, input_fn)
+    while program.iteration():
         pass
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
-import engine
+from instruction import Instruction
+from program import Program
 
 from typing import List, Optional
 
@@ -11,7 +12,7 @@ class FailedError(RuntimeError):
             msg += '\n' + message
         super().__init__(msg)
 
-class Cell:
+class AssertionCell:
     def __init__(self, is_current: bool, value):
         assert isinstance(value, int) or isinstance(value, str) or value is None, str(value)
         self.is_current = is_current
@@ -28,8 +29,8 @@ class Cell:
         else:
             return True
 
-class State:
-    def __init__(self, cells: List[Cell]):
+class Assertion(Instruction):
+    def __init__(self, cells: List[AssertionCell]):
         assert isinstance(cells, list)
         is_current_count = 0
         for i, cell in enumerate(cells):
@@ -43,10 +44,13 @@ class State:
     def __str__(self):
         return '= ' + ' '.join(str(cell) for cell in self._cells)
 
-    def match(self, tape: engine.Tape):
-        if tape.get_position() < self._current_offset:
+    def run(self, program: Program):
+        if program.tape.get_position() < self._current_offset:
             raise FailedError(self, None, 'Too far left')
-        actual = [tape.get_value_relative(i - self._current_offset) for i in range(len(self._cells))]
+        actual = [program.tape.get_value_relative(i - self._current_offset) for i in range(len(self._cells))]
         for i, cell in enumerate(self._cells):
             if not cell.matches(actual[i]):
                 raise FailedError(self, actual, None)
+
+    def loop_level_change(self) -> int:
+        return 0
