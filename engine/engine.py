@@ -60,14 +60,14 @@ class Instruction:
         self.op = op
 
     def __str__(self):
-        return self.op
+        return self.op + ' @ ' + str(self._line) + ':' + str(self._col)
 
 class Code:
     def __init__(self, code: List[Instruction]):
         self.code = code
 
     def __str__(self):
-        return ''.join(str(op) for op in self.code)
+        return ''.join(op.op for op in self.code)
 
 class Engine:
     def __init__(self, tape: Tape, sections: List, output_fn: Callable[[str], None], input_fn: Callable[[], str]):
@@ -78,7 +78,25 @@ class Engine:
         self._output = output_fn
         self._input = input_fn
 
-    def _run_instruction(self, op: str):
+    def _next(self):
+        if self._current[0] >= len(self._sections):
+            return None
+        section = self._sections[self._current[0]]
+        if isinstance(section, assertion.State):
+            self._current[0] += 1
+            self._current[1] = 0
+            return section
+        elif isinstance(section, Code):
+            instruction = section.code[self._current[1]]
+            self._current[1] += 1
+            if self._current[1] >= len(section.code):
+                self._current[0] += 1
+                self._current[1] = 0
+            return instruction
+        else:
+            assert False, 'Invalid section ' + repr(section)
+
+    def _run_op(self, op: str):
         if op == '+':
             self._tape.increment_by(1)
         elif op == '-':
@@ -92,32 +110,40 @@ class Engine:
         elif op == ',':
             self._tape.set_value_relative(0, ord(self._input()))
         elif op == '[':
-            self._loop_stack.append(list(self._current))
+            if self._tape.get_value_relative(0):
+                self._loop_stack.append(list(self._current))
+            else:
+                level = 1
+                while level > 0:
+                    unit = self._next()
+                    if unit is None:
+                        raise RuntimeError('Unmatched \'[\'')
+                    elif isinstance(unit, Instruction):
+                        if unit.op == ']':
+                            level -= 1
+                        elif unit.op == '[':
+                            level += 1
         elif op == ']':
             if not self._loop_stack:
                 raise RuntimeError('Unmatched \']\'')
-            loop_start = self._loop_stack.pop()
-            if self._tape.get_value_relative(0) != 0:
-                self._current = loop_start
-                self._current[1] -= 1
+            if self._tape.get_value_relative(0):
+                self._current = list(self._loop_stack[-1])
+            else:
+                self._loop_stack.pop()
         else:
-            assert False, 'Invalid instruction ' + repr(op)
+            assert False, 'Invalid operation ' + repr(op)
 
     def iteration(self) -> bool:
-        if self._current[0] >= len(self._sections):
+        unit = self._next()
+        if unit is None:
             return False
-        section = self._sections[self._current[0]]
-        if isinstance(section, assertion.State):
-            section.match(self._tape)
-            self._current[0] += 1
-            self._current[1] = 0
-        elif isinstance(section, Code):
-            instruction = section.code[self._current[1]]
-            self._run_instruction(instruction.op)
-            self._current[1] += 1
-            if self._current[1] >= len(section.code):
-                self._current[0] += 1
-                self._current[1] = 0
+        elif isinstance(unit, assertion.State):
+            unit.match(self._tape)
+        elif isinstance(unit, Instruction):
+            try:
+                self._run_op(unit.op)
+            except RuntimeError as e:
+                raise RuntimeError(str(unit) + ': ' + str(e))
         else:
             assert False, 'Invalid section ' + repr(section)
         return True

@@ -9,7 +9,7 @@ def _code(text: str, line: int, offset: int):
     code = []
     for i, c in enumerate(text):
         if c in engine.ops:
-            code.append(engine.Instruction(line, i + offset, c))
+            code.append(engine.Instruction(line, i + offset + 1, c))
     if code:
         return engine.Code(code)
     else:
@@ -45,7 +45,7 @@ def _line(line: str, number: int):
     if line.startswith('='):
         return _assertion(line[1:].strip())
     else:
-        return _code(line, number, 0)
+        return _code(line, number + 1, 0)
 
 def source_file(source_file: args.SourceFile) -> List:
     sections: List = []
