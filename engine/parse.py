@@ -2,6 +2,7 @@ from instruction import Instruction
 from assertion import Assertion, AssertionCell
 from op import Op, op_set
 from source_file import SourceFile
+from args import Args
 
 import re
 from typing import List
@@ -36,23 +37,23 @@ def _assertion(text: str) -> Assertion:
         cells.append(cell)
     return Assertion(cells)
 
-def _line(line: str, number: int) -> List[Instruction]:
+def _line(line: str, number: int, args: Args) -> List[Instruction]:
     assert isinstance(line, str)
     line = line.strip()
     code = _code(line, number + 1, 0)
-    if line.startswith('='):
+    if args.assertions() and line.startswith('='):
         if code:
             raise RuntimeError('Brainfuck code in assertion line ' + str(number))
         return [_assertion(line[1:].strip())]
     else:
         return code
 
-def source(source_file: SourceFile) -> List[Instruction]:
+def source(source_file: SourceFile, args: Args) -> List[Instruction]:
     code: List[Instruction] = []
     errors = []
     for i, line in enumerate(source_file.contents().splitlines()):
         try:
-            code += _line(line, i)
+            code += _line(line, i, args)
         except RuntimeError as err:
             errors.append(str(source_file) + ':' + str(i) + ': ' + str(err))
     # TODO: notice unmatched braces here

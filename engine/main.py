@@ -23,9 +23,9 @@ def input_fn() -> str:
     return input_buffer.pop(0)
 
 def main():
-    arguments = Args(sys.argv)
-    source_file = SourceFile(arguments.source_path())
-    code = parse.source(source_file)
+    args = Args(sys.argv)
+    source_file = SourceFile(args.source_path())
+    code = parse.source(source_file, args)
     program = Program(Tape(0, []), code, output_fn, input_fn)
     while program.iteration():
         pass

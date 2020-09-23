@@ -11,7 +11,14 @@ class Args:
             raise RuntimeError('No source file specified')
         else:
             raise RuntimeError('Too many arguments')
+        self._assertions = True
+        self._optimize = True
 
     def source_path(self):
         return self._source_path
 
+    def optimize(self):
+        return self._optimize
+
+    def assertions(self):
+        return self._assertions
