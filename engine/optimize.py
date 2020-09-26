@@ -10,6 +10,7 @@ class Block(Instruction):
         self._code = ''
         self._values = defaultdict(lambda: 0)
         self._offset = 0
+        self._is_unrolled_loop = False
 
     def __str__(self):
         return self._code
@@ -44,9 +45,20 @@ class Block(Instruction):
 
         return True
 
+    def try_unroll_loop(self) -> bool:
+        if self._is_unrolled_loop or self._offset or self._values[0] != -1:
+            return False
+        else:
+            self._is_unrolled_loop = True
+            return True
+
     def run(self, program: Program):
+        if self._is_unrolled_loop:
+            multiplier = program.tape.get_value(0)
+        else:
+            multiplier = 1
         for key, val in self._values.items():
-            program.tape.set_value(key, program.tape.get_value(key) + val)
+            program.tape.set_value(key, program.tape.get_value(key) + val * multiplier)
         program.tape.move_by(self._offset)
 
     def loop_level_change(self) -> int:
@@ -65,3 +77,10 @@ def optimize(code: List[Instruction]):
             block = Block()
             i += 2
     code.append(block)
+    i = 1
+    while i < len(code) - 1:
+        if (isinstance(code[i], Block) and code[i - 1] == '[' and code[i + 1] == ']'):
+            if code[i].try_unroll_loop():
+                code.pop(i + 1)
+                code.pop(i - 1)
+        i += 1
