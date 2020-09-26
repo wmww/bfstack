@@ -23,6 +23,8 @@ class Op(Instruction):
 
     def run(self, program: Program):
         op = self._op
+        program.emulated_ops += 1
+        program.real_ops += 1
         if op == '+':
             program.tape.set_value(0, program.tape.get_value(0) + 1)
         elif op == '-':
