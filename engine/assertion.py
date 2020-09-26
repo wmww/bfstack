@@ -45,10 +45,12 @@ class Assertion(Instruction):
         return '= ' + ' '.join(str(cell) for cell in self._cells)
 
     def run(self, program: Program):
+        program.real_ops += 1
         if program.tape.get_position() < self._current_offset:
             raise FailedError(self, None, 'Too far left')
         actual = [program.tape.get_value(i - self._current_offset) for i in range(len(self._cells))]
         for i, cell in enumerate(self._cells):
+            program.real_ops += 1
             if not cell.matches(actual[i]):
                 raise FailedError(self, actual, None)
 

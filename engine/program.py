@@ -9,6 +9,8 @@ class Program:
         self.code = code
         self.current = 0
         self.stack: List[int] = []
+        self.emulated_ops = 0
+        self.real_ops = 0
         self._output = output_fn
         self._input = input_fn
 

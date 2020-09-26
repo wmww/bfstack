@@ -13,6 +13,7 @@ class Args:
             raise RuntimeError('Too many arguments')
         self._assertions = True
         self._optimize = True
+        self._show_stats = True
 
     def source_path(self):
         return self._source_path
@@ -22,3 +23,6 @@ class Args:
 
     def assertions(self):
         return self._assertions
+
+    def show_stats(self):
+        return self._show_stats

@@ -10,6 +10,7 @@ class Block(Instruction):
         self._code = ''
         self._values = defaultdict(lambda: 0)
         self._offset = 0
+        self._emulated_ops = 0
         self._is_unrolled_loop = False
 
     def __str__(self):
@@ -43,6 +44,8 @@ class Block(Instruction):
         if self._values[self._offset] == 0:
             self._values.pop(self._offset)
 
+        self._emulated_ops += 1
+
         return True
 
     def try_unroll_loop(self) -> bool:
@@ -53,13 +56,19 @@ class Block(Instruction):
             return True
 
     def run(self, program: Program):
+        program.real_ops += 1
         if self._is_unrolled_loop:
             multiplier = program.tape.get_value(0)
         else:
             multiplier = 1
         for key, val in self._values.items():
+            program.real_ops += 1
             program.tape.set_value(key, program.tape.get_value(key) + val * multiplier)
         program.tape.move_by(self._offset)
+        emulated_ops = self._emulated_ops * multiplier
+        if self._is_unrolled_loop:
+            emulated_ops += 2
+        program.emulated_ops += emulated_ops
 
     def loop_level_change(self) -> int:
         return 0
