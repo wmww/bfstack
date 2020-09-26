@@ -2,7 +2,7 @@ from instruction import Instruction
 from op import Op
 from program import Program
 
-from typing import List
+from typing import List, cast
 from collections import defaultdict
 
 class Block(Instruction):
@@ -74,22 +74,22 @@ class Block(Instruction):
         return 0
 
 def optimize(code: List[Instruction]):
-    block = Block()
+    current = Block()
     i = 0
     while i < len(code):
-        if block.add_op(code[i]):
+        if current.add_op(code[i]):
             code.pop(i)
-        elif block.is_empty():
+        elif current.is_empty():
             i += 1
         else:
-            code.insert(i, block)
-            block = Block()
+            code.insert(i, current)
+            current = Block()
             i += 2
-    code.append(block)
+    code.append(current)
     i = 1
     while i < len(code) - 1:
         if (isinstance(code[i], Block) and code[i - 1] == '[' and code[i + 1] == ']'):
-            if code[i].try_unroll_loop():
+            if cast(Block, code[i]).try_unroll_loop():
                 code.pop(i + 1)
                 code.pop(i - 1)
         i += 1
