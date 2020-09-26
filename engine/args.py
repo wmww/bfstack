@@ -1,28 +1,17 @@
 import logging
+import argparse
 
 logger = logging.getLogger(__name__)
 
 class Args:
     def __init__(self, argv):
-        args = argv[1:]
-        if len(args) == 1:
-            self._source_path = args[0]
-        elif len(args) == 0:
-            raise RuntimeError('No source file specified')
-        else:
-            raise RuntimeError('Too many arguments')
-        self._assertions = True
-        self._optimize = True
-        self._show_stats = True
-
-    def source_path(self):
-        return self._source_path
-
-    def optimize(self):
-        return self._optimize
-
-    def assertions(self):
-        return self._assertions
-
-    def show_stats(self):
-        return self._show_stats
+        parser = argparse.ArgumentParser(description='Run and/or test a brainfuck program')
+        parser.add_argument('source_file', type=str, help='brainfuck source code file to load')
+        parser.add_argument('-a', '--assertions', action='store_true', help='check assertion lines')
+        parser.add_argument('-i', '--info', action='store_true', help='show stats and other debugging info')
+        parser.add_argument('--no-optimize', action='store_true', help='don\'t run any optimizations')
+        result = parser.parse_args(argv)
+        self.source_path = result.source_file
+        self.assertions = result.assertions
+        self.show_info = result.info
+        self.optimize = not result.no_optimize

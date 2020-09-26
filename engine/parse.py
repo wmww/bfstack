@@ -41,7 +41,7 @@ def _line(line: str, number: int, args: Args) -> List[Instruction]:
     assert isinstance(line, str)
     line = line.strip()
     code = _code(line, number + 1, 0)
-    if args.assertions() and line.startswith('='):
+    if args.assertions and line.startswith('='):
         if code:
             raise RuntimeError('Brainfuck code in assertion line ' + str(number))
         return [_assertion(line[1:].strip())]
