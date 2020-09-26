@@ -30,13 +30,13 @@ def input_fn() -> str:
     return input_buffer.pop(0)
 
 def main():
-    args = Args(sys.argv)
-    if args.show_stats():
+    args = Args(sys.argv[1:]) # strip off the first argument (program name)
+    if args.show_info:
         logging.basicConfig(level=logging.INFO)
     load_start_time = time.time()
-    source_file = SourceFile(args.source_path())
+    source_file = SourceFile(args.source_path)
     code = parse.source(source_file, args)
-    if args.optimize():
+    if args.optimize:
         optimize.optimize(code)
     program = Program(Tape(0, []), code, output_fn, input_fn)
     program_start_time = time.time()
