@@ -9,7 +9,7 @@ import parse
 from typing import List, Tuple
 import os
 import unittest
-from unittest import TestCase, TestSuite, TestResult
+from unittest import TestCase, TestSuite, TestResult, expectedFailure
 
 input_buffer: List[str] = []
 
@@ -21,7 +21,6 @@ def input_fn() -> str:
     raise RuntimeError('Input handling not implemented in tests')
 
 def run_test_code(self, source_path):
-    print('Running ' + source_path)
     args = Args()
     args.source_path = source_path
     source_file = SourceFile(args)
@@ -35,7 +34,7 @@ def scan_test_files() -> List[Tuple[str, str]]:
     result = []
     for name in os.listdir(test_dir):
         if name.endswith('.bf'):
-            result.append((os.path.basename(name), test_dir + name))
+            result.append((os.path.splitext(name)[0], test_dir + name))
     return result
 
 def build_test_runner(source_path):
@@ -47,7 +46,10 @@ def get_test_cases() -> List:
     test_files = scan_test_files()
     method_map = {}
     for name, source_path in test_files:
-        method_map['test_' + name] = build_test_runner(source_path)
+        runner = build_test_runner(source_path)
+        if name.endswith('_fails'):
+            runner = expectedFailure(runner)
+        method_map['test_' + name] = runner
     return [
         type('TestSourceFiles', (TestCase, ), method_map),
     ]
