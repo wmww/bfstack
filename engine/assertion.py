@@ -4,10 +4,10 @@ from program import Program
 from typing import List, Optional
 
 class FailedError(RuntimeError):
-    def __init__(self, state, actual: Optional[List[int]], message: Optional[str]):
+    def __init__(self, state, actual: Optional[str], message: Optional[str]):
         msg = '\nFailed: ' + str(state)
         if actual:
-            msg += '\nActual:   ' + ' '.join(str(i) for i in actual)
+            msg += '\nActual:   ' + actual
         if message:
             msg += '\n' + message
         super().__init__(msg)
@@ -52,7 +52,14 @@ class Assertion(Instruction):
         for i, cell in enumerate(self._cells):
             program.real_ops += 1
             if not cell.matches(actual[i]):
-                raise FailedError(self, actual, None)
+                actual_str = ''
+                for i, value in enumerate(actual):
+                    if i:
+                        actual_str += ' '
+                    if i == self._current_offset:
+                        actual_str += '`'
+                    actual_str += str(value)
+                raise FailedError(self, actual_str, None)
 
     def loop_level_change(self) -> int:
         return 0
