@@ -3,6 +3,7 @@ from assertion import Assertion, AssertionCell
 from op import Op, op_set
 from source_file import SourceFile
 from args import Args
+import optimize
 
 import re
 from typing import List
@@ -61,4 +62,6 @@ def source(source_file: SourceFile, args: Args) -> List[Instruction]:
         message = str(len(errors)) + ' error' + ('s' if len(errors) > 1 else '') + ':'
         message += ''.join('\n\n' + error for error in errors)
         raise RuntimeError(message)
+    if args.optimize:
+        optimize.optimize(code)
     return code
