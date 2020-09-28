@@ -5,7 +5,6 @@ from source_file import SourceFile
 from program import Program
 from tape import Tape
 import parse
-import optimize
 
 import sys
 import time
@@ -30,14 +29,13 @@ def input_fn() -> str:
     return input_buffer.pop(0)
 
 def main():
-    args = Args(sys.argv[1:]) # strip off the first argument (program name)
+    args = Args()
+    args.parse(sys.argv[1:]) # strip off the first argument (program name)
     if args.show_info:
         logging.basicConfig(level=logging.INFO)
     load_start_time = time.time()
-    source_file = SourceFile(args.source_path)
+    source_file = SourceFile(args)
     code = parse.source(source_file, args)
-    if args.optimize:
-        optimize.optimize(code)
     program = Program(Tape(0, []), code, output_fn, input_fn)
     program_start_time = time.time()
     logger.info('Took ' + str(round(program_start_time - load_start_time, 2)) + 's to load program')
