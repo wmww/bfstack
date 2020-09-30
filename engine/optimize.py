@@ -1,6 +1,7 @@
 from instruction import Instruction
 from op import Op
 from program import Program
+from tape import TooFarLeftError
 
 from typing import List, cast
 from collections import defaultdict
@@ -10,6 +11,7 @@ class Block(Instruction):
         self._code = ''
         self._values = defaultdict(lambda: 0)
         self._offset = 0
+        self._required_left_room = 0
         self._emulated_ops = 0
         self._is_unrolled_loop = False
 
@@ -30,6 +32,7 @@ class Block(Instruction):
             self._offset += 1
         elif op == '<':
             self._offset -= 1
+            self._required_left_room = max(self._required_left_room, -self._offset)
         elif op == '.':
             return False
         elif op == ',':
@@ -57,6 +60,8 @@ class Block(Instruction):
 
     def run(self, program: Program):
         program.real_ops += 1
+        if self._required_left_room > program.tape.get_position():
+            raise TooFarLeftError()
         if self._is_unrolled_loop:
             multiplier = program.tape.get_value(0)
         else:
