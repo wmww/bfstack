@@ -40,6 +40,13 @@ class LiteralAssertionCell(AssertionCell):
     def matches(self, value: int) -> bool:
         return self._value == value
 
+class WildcardAssertionCell(AssertionCell):
+    def __str__(self):
+        return '*'
+
+    def matches(self, value: int) -> bool:
+        return True
+
 class Assertion(Instruction):
     def __init__(self, cells: Sequence[AssertionCell], offset_of_current: int):
         self._cells = cells
