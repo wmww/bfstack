@@ -11,6 +11,9 @@ With the `-i` flag, you can see how many emulated brainfuck operations were run 
 
 Optimizations can not be made across assertions. If assertions are not enabled, they do not effect optimization or runtime performance.
 
+## Tests
+All tests are currently integration tests found in the tests directory. `run_engine_tests.py` automatically detects and runs all tests. Tests that end with `_fails` are supposed to fail an assertion or encounter a runtime error (such as going too far left). Since tests are just Brainfuck source files with assertions, they should be portable across implementations (assuming they support the assertion syntax specified below)
+
 ## Assertions
 NOTE: most of this is not yet tested or implemented
 

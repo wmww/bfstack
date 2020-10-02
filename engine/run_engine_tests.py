@@ -9,7 +9,7 @@ import parse
 from typing import List, Tuple
 import os
 import unittest
-from unittest import TestCase, TestSuite, TestResult, expectedFailure
+from unittest import TestCase, TestSuite, TestResult
 
 input_buffer: List[str] = []
 
@@ -20,14 +20,23 @@ def input_fn() -> str:
     global input_buffer
     raise RuntimeError('Input handling not implemented in tests')
 
-def run_test_code(self, source_path):
+def run_test_code(self, source_path, expect_fail):
     args = Args()
     args.source_path = source_path
     source_file = SourceFile(args)
     code = parse.source(source_file, args)
-    program = Program(Tape(0, []), code, output_fn, input_fn)
-    while program.iteration():
-        pass
+    tape = Tape(0, [])
+    program = Program(tape, code, output_fn, input_fn)
+    if expect_fail:
+        try:
+            while program.iteration():
+                pass
+        except RuntimeError as e:
+            return
+        assert False, 'Test passed unexpectedly, tape: ' + str(tape)
+    else:
+        while program.iteration():
+            pass
 
 def scan_test_files() -> List[Tuple[str, str]]:
     test_dir = os.path.dirname(os.path.realpath(__file__)) + '/tests/'
@@ -37,18 +46,17 @@ def scan_test_files() -> List[Tuple[str, str]]:
             result.append((os.path.splitext(name)[0], test_dir + name))
     return result
 
-def build_test_runner(source_path):
+def build_test_runner(source_path, expect_fail):
     def fn(self):
-        run_test_code(self, source_path)
+        run_test_code(self, source_path, expect_fail)
     return fn
 
 def get_test_cases() -> List:
     test_files = scan_test_files()
     method_map = {}
     for name, source_path in test_files:
-        runner = build_test_runner(source_path)
-        if name.endswith('_fails'):
-            runner = expectedFailure(runner)
+        expect_fail = name.endswith('_fails')
+        runner = build_test_runner(source_path, expect_fail)
         method_map['test_' + name] = runner
     return [
         type('TestSourceFiles', (TestCase, ), method_map),
