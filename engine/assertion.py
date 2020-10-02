@@ -14,13 +14,12 @@ class FailedError(RuntimeError):
         super().__init__(msg)
 
 class AssertionCell:
-    def __init__(self, is_current: bool, value):
+    def __init__(self, value):
         assert isinstance(value, int) or isinstance(value, str) or value is None, str(value)
-        self.is_current = is_current
         self._value = value
 
     def __str__(self):
-        return ('`' if self.is_current else '') + str(self._value)
+        return str(self._value)
 
     def matches(self, value: int) -> bool:
         if isinstance(self._value, int):
@@ -31,29 +30,29 @@ class AssertionCell:
             return True
 
 class Assertion(Instruction):
-    def __init__(self, cells: List[AssertionCell]):
-        assert isinstance(cells, list)
-        is_current_count = 0
-        for i, cell in enumerate(cells):
-            if cell.is_current:
-                self._current_offset = i
-                is_current_count += 1
-        if is_current_count != 1:
-            raise RuntimeError('Assertion should have exactly one current cell')
+    def __init__(self, cells: List[AssertionCell], offset_of_current: int):
         self._cells = cells
+        self._offset_of_current = offset_of_current
 
     def __str__(self):
-        return '= ' + ' '.join(str(cell) for cell in self._cells)
+        result = '= '
+        for i, cell in enumerate(self._cells):
+            if i:
+                result += ' '
+            if i == self._offset_of_current:
+                result += '`'
+            result += str(cell)
+        return result
 
     def run(self, program: Program):
         program.real_ops += 1
-        if program.tape.get_position() < self._current_offset:
+        if program.tape.get_position() < self._offset_of_current:
             raise FailedError(self, None, 'Too far left')
-        actual = [program.tape.get_value(i - self._current_offset) for i in range(len(self._cells))]
+        actual = [program.tape.get_value(i - self._offset_of_current) for i in range(len(self._cells))]
         for i, cell in enumerate(self._cells):
             program.real_ops += 1
             if not cell.matches(actual[i]):
-                actual_tape = Tape(self._current_offset, actual)
+                actual_tape = Tape(self._offset_of_current, actual)
                 raise FailedError(self, actual_tape, None)
 
     def loop_level_change(self) -> int:
