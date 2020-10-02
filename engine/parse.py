@@ -1,5 +1,5 @@
 from instruction import Instruction
-from assertion import Assertion, AssertionCell
+from assertion import Assertion, AssertionCell, LiteralAssertionCell, VariableAssertionCell
 from op import Op, op_set
 from source_file import SourceFile
 from args import Args
@@ -18,15 +18,15 @@ def _code(text: str, line: int, offset: int) -> List[Instruction]:
 def _assertion_cell(text: str) -> AssertionCell:
     number_matches = re.findall('^[0-9]+$', text)
     if number_matches:
-        return AssertionCell(int(text))
+        return LiteralAssertionCell(int(text))
     ident_matches = re.findall('^[a-zA-Z_][a-zA-Z_0-9]*$', text)
     if ident_matches:
-        return AssertionCell(text)
+        return VariableAssertionCell(text)
     raise RuntimeError('Invalid assertion cell: "' + text + '"')
 
 def _assertion(text: str) -> Assertion:
     cell_strs = text.split()
-    cells = []
+    cells: List[AssertionCell] = []
     offset_of_current = None
     for cell_str in cell_strs:
         if cell_str.startswith('`'):
@@ -36,6 +36,8 @@ def _assertion(text: str) -> Assertion:
             cell_str = cell_str[1:]
         cell = _assertion_cell(cell_str)
         cells.append(cell)
+    if offset_of_current is None:
+        raise RuntimeError('Assertion "' + text + '" has no current cell')
     return Assertion(cells, offset_of_current)
 
 def _line(line: str, number: int, args: Args) -> List[Instruction]:
