@@ -15,11 +15,18 @@ def _code(text: str, line: int, offset: int) -> List[Instruction]:
             code.append(Op(line, i + offset + 1, c))
     return code
 
+def _character_literal(text: str) -> int:
+    if len(text) > 1:
+        raise RuntimeError('Invalid character literal: "' + text + '"')
+    return ord(text)
+
 def _matcher(text: str) -> Matcher:
     if text.startswith('!'):
         return InverseMatcher(_matcher(text[1:]))
     if text == '*':
         return WildcardMatcher()
+    if text.startswith('@'):
+        return LiteralMatcher(_character_literal(text[1:]))
     number_matches = re.findall('^[0-9]+$', text)
     if number_matches:
         return LiteralMatcher(int(text))
