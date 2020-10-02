@@ -57,7 +57,7 @@ class InverseMatcher(Matcher):
     def matches(self, value: int) -> bool:
         return not self._inner.matches(value)
 
-class Assertion(Instruction):
+class TapeAssertion(Instruction):
     def __init__(self, cells: Sequence[Matcher], offset_of_current: int):
         self._cells = cells
         self._offset_of_current = offset_of_current
