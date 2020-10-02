@@ -16,27 +16,27 @@ def _code(text: str, line: int, offset: int) -> List[Instruction]:
     return code
 
 def _assertion_cell(text: str) -> AssertionCell:
-    current = False
-    if text.startswith('`'):
-        current = True
-        text = text[1:]
-    if not text:
-        raise RuntimeError('Empty cell')
     number_matches = re.findall('^[0-9]+$', text)
     if number_matches:
-        return AssertionCell(current, int(text))
+        return AssertionCell(int(text))
     ident_matches = re.findall('^[a-zA-Z_][a-zA-Z_0-9]*$', text)
     if ident_matches:
-        return AssertionCell(current, text)
-    raise RuntimeError('Invalid assertion cell: ' + text)
+        return AssertionCell(text)
+    raise RuntimeError('Invalid assertion cell: "' + text + '"')
 
 def _assertion(text: str) -> Assertion:
     cell_strs = text.split()
     cells = []
+    offset_of_current = None
     for cell_str in cell_strs:
+        if cell_str.startswith('`'):
+            if offset_of_current is not None:
+                raise RuntimeError('Assertion "' + text + '" has multiple current cells')
+            offset_of_current = len(cells)
+            cell_str = cell_str[1:]
         cell = _assertion_cell(cell_str)
         cells.append(cell)
-    return Assertion(cells)
+    return Assertion(cells, offset_of_current)
 
 def _line(line: str, number: int, args: Args) -> List[Instruction]:
     assert isinstance(line, str)
