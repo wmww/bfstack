@@ -1,5 +1,5 @@
 from instruction import Instruction
-from assertion import TapeAssertion, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
+from assertion import TapeAssertion, OutputAssertion, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
 from op import Op, op_set
 from source_file import SourceFile
 from args import Args
@@ -15,9 +15,9 @@ def _code(text: str, line: int, offset: int) -> List[Instruction]:
             code.append(Op(line, i + offset + 1, c))
     return code
 
-def _assertion_cell(text: str) -> Matcher:
+def _matcher(text: str) -> Matcher:
     if text.startswith('!'):
-        return InverseMatcher(_assertion_cell(text[1:]))
+        return InverseMatcher(_matcher(text[1:]))
     if text == '*':
         return WildcardMatcher()
     number_matches = re.findall('^[0-9]+$', text)
@@ -38,20 +38,33 @@ def _tape_assertion(text: str) -> TapeAssertion:
                 raise RuntimeError('Assertion "' + text + '" has multiple current cells')
             offset_of_current = len(cells)
             cell_str = cell_str[1:]
-        cell = _assertion_cell(cell_str)
+        cell = _matcher(cell_str)
         cells.append(cell)
     if offset_of_current is None:
         raise RuntimeError('Assertion "' + text + '" has no current cell')
     return TapeAssertion(cells, offset_of_current)
 
+def _output_assertion(text: str) -> OutputAssertion:
+    matcher_strs = text.split()
+    matchers: List[Matcher] = []
+    for matcher_str in matcher_strs:
+        matchers.append(_matcher(matcher_str))
+    return OutputAssertion(matchers)
+
 def _line(line: str, number: int, args: Args) -> List[Instruction]:
-    assert isinstance(line, str)
     line = line.strip()
+    if not line:
+        return []
     code = _code(line, number + 1, 0)
-    if args.assertions and line.startswith('='):
+    if args.assertions and line[0] in ('=', ':'):
         if code:
             raise RuntimeError('Brainfuck code in assertion line ' + str(number))
-        return [_tape_assertion(line[1:].strip())]
+        if line[0] == '=':
+            return [_tape_assertion(line[1:].strip())]
+        elif line[0] == ':':
+            return [_output_assertion(line[1:].strip())]
+        else:
+            assert False, 'unreachable'
     else:
         return code
 
