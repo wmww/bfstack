@@ -1,5 +1,5 @@
 from instruction import Instruction
-from assertion import Assertion, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
+from assertion import TapeAssertion, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
 from op import Op, op_set
 from source_file import SourceFile
 from args import Args
@@ -28,7 +28,7 @@ def _assertion_cell(text: str) -> Matcher:
         return VariableMatcher(text)
     raise RuntimeError('Invalid assertion cell: "' + text + '"')
 
-def _assertion(text: str) -> Assertion:
+def _tape_assertion(text: str) -> TapeAssertion:
     cell_strs = text.split()
     cells: List[Matcher] = []
     offset_of_current = None
@@ -42,7 +42,7 @@ def _assertion(text: str) -> Assertion:
         cells.append(cell)
     if offset_of_current is None:
         raise RuntimeError('Assertion "' + text + '" has no current cell')
-    return Assertion(cells, offset_of_current)
+    return TapeAssertion(cells, offset_of_current)
 
 def _line(line: str, number: int, args: Args) -> List[Instruction]:
     assert isinstance(line, str)
@@ -51,7 +51,7 @@ def _line(line: str, number: int, args: Args) -> List[Instruction]:
     if args.assertions and line.startswith('='):
         if code:
             raise RuntimeError('Brainfuck code in assertion line ' + str(number))
-        return [_assertion(line[1:].strip())]
+        return [_tape_assertion(line[1:].strip())]
     else:
         return code
 
