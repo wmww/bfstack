@@ -34,7 +34,7 @@ class Op(Instruction):
         elif op == '<':
             program.tape.move_by(-1)
         elif op == '.':
-            program.send_output(chr(program.tape.get_value(0)))
+            program.send_output(program.tape.get_value(0))
         elif op == ',':
             program.tape.set_value(0, ord(program.get_input()))
         elif op == '[':
