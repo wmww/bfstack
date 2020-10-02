@@ -1,5 +1,5 @@
 from instruction import Instruction
-from assertion import Assertion, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher
+from assertion import Assertion, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
 from op import Op, op_set
 from source_file import SourceFile
 from args import Args
@@ -16,6 +16,8 @@ def _code(text: str, line: int, offset: int) -> List[Instruction]:
     return code
 
 def _assertion_cell(text: str) -> Matcher:
+    if text.startswith('!'):
+        return InverseMatcher(_assertion_cell(text[1:]))
     if text == '*':
         return WildcardMatcher()
     number_matches = re.findall('^[0-9]+$', text)

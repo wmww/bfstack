@@ -47,6 +47,16 @@ class WildcardMatcher(Matcher):
     def matches(self, value: int) -> bool:
         return True
 
+class InverseMatcher(Matcher):
+    def __init__(self, inner: Matcher):
+        self._inner = inner
+
+    def __str__(self):
+        return '!' + str(inner)
+
+    def matches(self, value: int) -> bool:
+        return not self._inner.matches(value)
+
 class Assertion(Instruction):
     def __init__(self, cells: Sequence[Matcher], offset_of_current: int):
         self._cells = cells
