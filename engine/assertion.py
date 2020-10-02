@@ -13,14 +13,14 @@ class FailedError(RuntimeError):
             msg += '\n' + message
         super().__init__(msg)
 
-class AssertionCell:
+class Matcher:
     def __str__(self):
         raise NotImplementedError()
 
     def matches(self, value: int) -> bool:
         raise NotImplementedError()
 
-class VariableAssertionCell(AssertionCell):
+class VariableMatcher(Matcher):
     def __init__(self, name: str):
         self._name = name
 
@@ -30,7 +30,7 @@ class VariableAssertionCell(AssertionCell):
     def matches(self, value: int) -> bool:
         return True # TODO
 
-class LiteralAssertionCell(AssertionCell):
+class LiteralMatcher(Matcher):
     def __init__(self, value: int):
         self._value = value
 
@@ -40,7 +40,7 @@ class LiteralAssertionCell(AssertionCell):
     def matches(self, value: int) -> bool:
         return self._value == value
 
-class WildcardAssertionCell(AssertionCell):
+class WildcardMatcher(Matcher):
     def __str__(self):
         return '*'
 
@@ -48,7 +48,7 @@ class WildcardAssertionCell(AssertionCell):
         return True
 
 class Assertion(Instruction):
-    def __init__(self, cells: Sequence[AssertionCell], offset_of_current: int):
+    def __init__(self, cells: Sequence[Matcher], offset_of_current: int):
         self._cells = cells
         self._offset_of_current = offset_of_current
 
