@@ -2,7 +2,7 @@ from instruction import Instruction
 from program import Program
 from tape import Tape
 
-from typing import List, Optional
+from typing import Sequence, Optional
 
 class FailedError(RuntimeError):
     def __init__(self, state, actual: Optional[Tape], message: Optional[str]):
@@ -14,23 +14,34 @@ class FailedError(RuntimeError):
         super().__init__(msg)
 
 class AssertionCell:
-    def __init__(self, value):
-        assert isinstance(value, int) or isinstance(value, str) or value is None, str(value)
+    def __str__(self):
+        raise NotImplementedError()
+
+    def matches(self, value: int) -> bool:
+        raise NotImplementedError()
+
+class VariableAssertionCell(AssertionCell):
+    def __init__(self, name: str):
+        self._name = name
+
+    def __str__(self):
+        return str(self._name)
+
+    def matches(self, value: int) -> bool:
+        return True # TODO
+
+class LiteralAssertionCell(AssertionCell):
+    def __init__(self, value: int):
         self._value = value
 
     def __str__(self):
         return str(self._value)
 
     def matches(self, value: int) -> bool:
-        if isinstance(self._value, int):
-            return self._value == value
-        elif isinstance(self._value, str):
-            return True
-        else:
-            return True
+        return self._value == value
 
 class Assertion(Instruction):
-    def __init__(self, cells: List[AssertionCell], offset_of_current: int):
+    def __init__(self, cells: Sequence[AssertionCell], offset_of_current: int):
         self._cells = cells
         self._offset_of_current = offset_of_current
 
