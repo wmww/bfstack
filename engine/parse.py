@@ -15,10 +15,30 @@ def _code(text: str, line: int, offset: int) -> List[Instruction]:
             code.append(Op(line, i + offset + 1, c))
     return code
 
+escapes = {
+    'n': '\n',
+    't': '\t',
+    's': ' ',
+    '\\': '\\',
+    ':': '.',
+    ';': ',',
+    '#': '+',
+    '~': '-',
+    '{': '<',
+    '}': '>',
+    '(': '[',
+    ')': ']',
+}
+
 def _character_literal(text: str) -> int:
-    if len(text) > 1:
-        raise RuntimeError('Invalid character literal: "' + text + '"')
-    return ord(text)
+    if text.startswith('\\'):
+        if len(text) != 2 or text[1] not in escapes:
+            raise RuntimeError('Invalid escape sequence: "' + text + '"')
+        return ord(escapes[text[1]])
+    else:
+        if len(text) > 1:
+            raise RuntimeError('Invalid character literal: "' + text + '"')
+        return ord(text)
 
 def _matcher(text: str) -> Matcher:
     if text.startswith('!'):
