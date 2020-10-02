@@ -1,13 +1,14 @@
 from instruction import Instruction
 from program import Program
+from tape import Tape
 
 from typing import List, Optional
 
 class FailedError(RuntimeError):
-    def __init__(self, state, actual: Optional[str], message: Optional[str]):
+    def __init__(self, state, actual: Optional[Tape], message: Optional[str]):
         msg = '\nFailed: ' + str(state)
         if actual:
-            msg += '\nActual:   ' + actual
+            msg += '\nActual:   ' + str(actual)
         if message:
             msg += '\n' + message
         super().__init__(msg)
@@ -52,14 +53,8 @@ class Assertion(Instruction):
         for i, cell in enumerate(self._cells):
             program.real_ops += 1
             if not cell.matches(actual[i]):
-                actual_str = ''
-                for i, value in enumerate(actual):
-                    if i:
-                        actual_str += ' '
-                    if i == self._current_offset:
-                        actual_str += '`'
-                    actual_str += str(value)
-                raise FailedError(self, actual_str, None)
+                actual_tape = Tape(self._current_offset, actual)
+                raise FailedError(self, actual_tape, None)
 
     def loop_level_change(self) -> int:
         return 0
