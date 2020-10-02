@@ -1,5 +1,5 @@
 from instruction import Instruction
-from assertion import Assertion, AssertionCell, LiteralAssertionCell, VariableAssertionCell
+from assertion import Assertion, AssertionCell, LiteralAssertionCell, VariableAssertionCell, WildcardAssertionCell
 from op import Op, op_set
 from source_file import SourceFile
 from args import Args
@@ -16,6 +16,8 @@ def _code(text: str, line: int, offset: int) -> List[Instruction]:
     return code
 
 def _assertion_cell(text: str) -> AssertionCell:
+    if text == '*':
+        return WildcardAssertionCell()
     number_matches = re.findall('^[0-9]+$', text)
     if number_matches:
         return LiteralAssertionCell(int(text))
