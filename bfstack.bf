@@ -8,25 +8,28 @@ S: subroutine
 L: label (within subroutine)
 
 the bottom of the call stack will be halt (0::0::0)
->>>
+>>>>
 
 call main (1::1::0)
 +>+>>
 
-0 0 0 1 1 1 `0
+= 0 0 0 1 1 0 `0
 
 start the loop on S
 <<[>>
 
-N S L `0 0 0
+= N S L `0 0 0
 
 bump L
 <+>
 
+= N S L1 `0 0 0
+
 copy namespace without loosing original
 <<<[->>>+>+<<<<]>>>>[-<<<<+>>>>]<
 
-N S L `N 0
+= N S L1 `N 0
+= `*
 
 std(1)
 NAMESPACE{ open{ [[->+<]+>-[[->+<]<->]<[- }; copy_S{ <<[->>+>+<<<]>>>[-<<<+>>>]< } }
@@ -93,7 +96,7 @@ NAMESPACE{ open{ [[->+<]+>-[[->+<]<->]<[- }; copy_S{ <<[->>+>+<<<]>>>[-<<<+>>>]<
 
 NAMESPACE_DONE{ close{ ]]>>[-<<+>>]<< } }
 
-subroutine_private_data N S `L 0 0 0 argument_data
+= subroutine_private_data N S L `0 0 0 argument_data
 
 end the loop on S
 <<]<
