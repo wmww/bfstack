@@ -17,23 +17,20 @@ All tests are currently integration tests found in the tests directory. `run_eng
 ## Assertions
 NOTE: most of this is not yet tested or implemented
 
-To aid with development and testing, BFStack uses a custom assertion syntax defined here. The engine will verify all assertions if `-a` is enabled. This document is the canonical source for the assertion syntax. Assertions are always on their own line (ASCII 10 at the beginning and end) and may not contain any Brainfuck operations.
+To aid with development and testing, BFStack uses a custom assertion syntax defined here. The engine will verify all assertions if the `-a` flag is set. This document is the canonical source for the assertion syntax. Assertions are always on their own line (ASCII 10 at the beginning and end) and may not contain any Brainfuck operations.
 
-### Tape assertion syntax
-Tape assertions start with a `=`. Whitespace (ASCII 9 and ASCII 32) may come before the `=`. They are composed of a sequence of whitespace-separated value matchers. Exactly one of the value matchers must be proceeded by a backtick (`\``). This marks the current cell. If all matchers match their corresponding data tape cells, the assertion passes. Otherwise, the assertion fails.
+### Syntax
+Assertions start with a `=`. Whitespace (ASCII 9 and ASCII 32) may come before the `=`. They are composed of a sequence of whitespace-separated value matchers. Exactly one of the value matchers must be proceeded by a backtick (`\``). This marks the current cell. If all matchers match their corresponding data tape cells, the assertion passes. Otherwise, the assertion fails.
 
-### Output assertion syntax
-Output assertions have the same syntax as tape assertions, except that they start with a `:` instead of a `=` and may not contain a backtick. The value matchers must match against characters that have already been printed. The assertion "consumes" the matched characters, and future assertions will not try to match against them.
+### Test input
+Lines queueing test input have the same syntax as assertions, except that they start with a `$` and don't have a current cell marker. Test input has no effect if the program is being run interactivly (real user input is __not__ checked against it). If not being run interactivly, matching values are generated and queued up. Random values are chosen if the matcher can match more than one value. All input must be consumed before the end of the program or the next test input line.
 
-### Test input syntax
-Lines queueing test input have the same syntax as output assertions, except that they start with a `$`. Test input has no effect if the program is being run interactivly (real user input is not checked against them). If not being run interactivly, matching values are generated and queued up. Random values are chosen if the matcher can match more than one value. All input must be consumed before the end of the program or the next test input line.
-
-### Value matcher syntax
-Value matchers are composable expressions that can either match or not match a number. Whitespace is only allowed within a matcher if it is inside parentheses. Matchers are composed of:
+### Matcher syntax
+Matchers are composable expressions that can either match or not match a number. Whitespace is not allowed within a matcher. Matchers are composed of:
 - `0`, `1`, `48`, etc: value literals match only their exact value.
-- `A`, `FOO`, `count_4`, etc: variables which can be any sequence of letters, underscores and numbers that start with a letter. If the same name didn't appear in the last tape assertion they are considered "unbound" and match anything. Otherwise, they are considered "bound" to the value they were before and only match that.
+- `A`, `FOO`, `count_4`, etc: variables which can be any sequence of letters, underscores and numbers that start with a letter. If the same name didn't appear in the last assertion they are considered "unbound" and match anything. Otherwise, they are considered "bound" to the value they were before and only match that.
 - `*`: wildcard, matches any value.
-- `@`*<character>*: matches the ASCII value of the given character. Character may be an escape sequence (see below). All ASCII characters are allowed except Brainfuck operations, backslash and whitespace.
+- `@`*<character>*: matches the ASCII value of the given character. *<character>* may be an escape sequence (see below). All ASCII characters are allowed except Brainfuck operations, backslash and whitespace.
 - `!`: inverses the following matcher (only matches if it does not match). Can not be applied to an unbound variable.
 
 #### Escape sequences
