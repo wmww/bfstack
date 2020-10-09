@@ -2,6 +2,7 @@ from tape import Tape
 from instruction import Instruction
 
 from typing import List, Optional, Callable
+from assertion_ctx import AssertionCtx
 
 class Program:
     def __init__(self, tape: Tape, code: List[Instruction], output_fn: Callable[[str], None], input_fn: Callable[[], str]):
@@ -14,6 +15,7 @@ class Program:
         self.unmatched_output: List[int] = []
         self._output = output_fn
         self._input = input_fn
+        self.assertion_ctx = AssertionCtx()
 
     def next_instruction(self) -> Optional[Instruction]:
         if self.current >= len(self.code):

@@ -1,6 +1,7 @@
 from instruction import Instruction
 from program import Program
 from tape import Tape
+from assertion_ctx import AssertionCtx
 
 from typing import Sequence, Optional
 
@@ -17,7 +18,7 @@ class Matcher:
     def __str__(self):
         raise NotImplementedError()
 
-    def matches(self, value: int) -> bool:
+    def matches(self, ctx: AssertionCtx, value: int) -> bool:
         raise NotImplementedError()
 
 class VariableMatcher(Matcher):
@@ -27,7 +28,7 @@ class VariableMatcher(Matcher):
     def __str__(self):
         return str(self._name)
 
-    def matches(self, value: int) -> bool:
+    def matches(self, ctx: AssertionCtx, value: int) -> bool:
         return True # TODO
 
 class LiteralMatcher(Matcher):
@@ -37,14 +38,14 @@ class LiteralMatcher(Matcher):
     def __str__(self):
         return str(self._value)
 
-    def matches(self, value: int) -> bool:
+    def matches(self, ctx: AssertionCtx, value: int) -> bool:
         return self._value == value
 
 class WildcardMatcher(Matcher):
     def __str__(self):
         return '*'
 
-    def matches(self, value: int) -> bool:
+    def matches(self, ctx: AssertionCtx, value: int) -> bool:
         return True
 
 class InverseMatcher(Matcher):
@@ -54,8 +55,8 @@ class InverseMatcher(Matcher):
     def __str__(self):
         return '!' + str(inner)
 
-    def matches(self, value: int) -> bool:
-        return not self._inner.matches(value)
+    def matches(self, ctx: AssertionCtx, value: int) -> bool:
+        return not self._inner.matches(ctx, value)
 
 class TapeAssertion(Instruction):
     def __init__(self, cells: Sequence[Matcher], offset_of_current: int):
@@ -79,7 +80,7 @@ class TapeAssertion(Instruction):
         actual = [program.tape.get_value(i - self._offset_of_current) for i in range(len(self._cells))]
         for i, cell in enumerate(self._cells):
             program.real_ops += 1
-            if not cell.matches(actual[i]):
+            if not cell.matches(program.assertion_ctx, actual[i]):
                 actual_tape = Tape(self._offset_of_current, actual)
                 raise FailedError(self, actual_tape, None)
 
@@ -99,7 +100,7 @@ class OutputAssertion(Instruction):
             if len(program.unmatched_output) == 0:
                 raise FailedError(self, None, 'insufficient output')
             value = program.unmatched_output.pop(0)
-            if not matcher.matches(value):
+            if not matcher.matches(program.assertion_ctx, value):
                 raise FailedError(self, None, 'output ' + str(value) + ' does not match ' + str(matcher))
         if len(program.unmatched_output) != 0:
             raise FailedError(self, None, 'some output not matched: ' + repr(program.unmatched_output))
