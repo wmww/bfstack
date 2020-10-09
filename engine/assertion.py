@@ -133,27 +133,6 @@ class TapeAssertion(Instruction):
     def loop_level_change(self) -> int:
         return 0
 
-class OutputAssertion(Instruction):
-    def __init__(self, matchers: Sequence[Matcher]):
-        self._matchers = matchers
-
-    def __str__(self):
-        return ': ' + ' '.join(str(m) for m in self._matchers)
-
-    def run(self, program: Program):
-        program.real_ops += 1
-        for matcher in self._matchers:
-            if len(program.unmatched_output) == 0:
-                raise FailedError(self, None, 'insufficient output', program.assertion_ctx)
-            value = program.unmatched_output.pop(0)
-            if not matcher.matches(program.assertion_ctx, value):
-                raise FailedError(self, None, 'output ' + str(value) + ' does not match ' + str(matcher), program.assertion_ctx)
-        if len(program.unmatched_output) != 0:
-            raise FailedError(self, None, 'some output not matched: ' + repr(program.unmatched_output), program.assertion_ctx)
-
-    def loop_level_change(self) -> int:
-        return 0
-
 class TestInput(Instruction):
     def __init__(self, matchers: Sequence[Matcher]):
         self._matchers = matchers
