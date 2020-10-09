@@ -139,6 +139,8 @@ class TestInput(Instruction):
 
     def run(self, program: Program):
         program.real_ops += 1
+        if program.queued_input:
+            raise RuntimeError('Test input given with ' + str(len(program.queued_input)) + ' unconsumed inputs')
         for m in self._matchers:
             program.real_ops += 1
             value = m.random_matching(program.assertion_ctx)
