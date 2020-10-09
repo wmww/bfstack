@@ -66,7 +66,7 @@ class InverseMatcher(Matcher):
         self._inner = inner
 
     def __str__(self):
-        return '!' + str(inner)
+        return '!' + str(self._inner)
 
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
         return not self._inner.matches(ctx, value)
