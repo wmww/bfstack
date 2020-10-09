@@ -12,7 +12,6 @@ class Program:
         self.stack: List[int] = []
         self.emulated_ops = 0
         self.real_ops = 0
-        self.unmatched_output: List[int] = []
         self.queued_input: List[int] = []
         self._output = output_fn
         self._input = input_fn
@@ -27,7 +26,6 @@ class Program:
             return instruction
 
     def send_output(self, value: int):
-        self.unmatched_output.append(value)
         self._output(chr(value))
 
     def get_input(self) -> str:
