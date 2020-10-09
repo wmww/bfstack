@@ -1,5 +1,7 @@
 from typing import List
 
+MAX_PRINT_LEN = 64
+
 class TooFarLeftError(RuntimeError):
     def __init__(self):
         super().__init__('Too far left')
@@ -12,12 +14,27 @@ class Tape:
 
     def __str__(self):
         result = []
-        for i, cell in enumerate(self._data):
-            if i == self._position:
+        data = self._data
+        pos = self._position
+        start = ''
+        end = ''
+        if pos > MAX_PRINT_LEN:
+            chop = pos - MAX_PRINT_LEN
+            data = data[chop:]
+            pos = MAX_PRINT_LEN
+            start = '(' + str(chop) + ' cells) … '
+        if len(data) > pos + MAX_PRINT_LEN:
+            chop = len(data) - pos - MAX_PRINT_LEN
+            data = data[:-chop]
+            end = ' … (' + str(chop) + ' cells)'
+        while len(data) - 1 < pos:
+            data.append(0)
+        for i, cell in enumerate(data):
+            if i == pos:
                 result.append('`' + str(cell))
             else:
                 result.append(str(cell))
-        return ' '.join(result)
+        return start + ' '.join(result) + end
 
     def get_position(self) -> int:
         return self._position
