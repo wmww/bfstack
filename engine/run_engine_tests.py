@@ -11,14 +11,8 @@ import os
 import unittest
 from unittest import TestCase, TestSuite, TestResult
 
-input_buffer: List[str] = []
-
 def output_fn(c: str):
     pass
-
-def input_fn() -> str:
-    global input_buffer
-    raise RuntimeError('Input handling not implemented in tests')
 
 def run_test_code(self, source_path, expect_fail):
     args = Args()
@@ -26,7 +20,7 @@ def run_test_code(self, source_path, expect_fail):
     source_file = SourceFile(args)
     code = parse.source(source_file, args)
     tape = Tape(0, [])
-    program = Program(tape, code, output_fn, input_fn)
+    program = Program(tape, code, output_fn, None)
     if expect_fail:
         try:
             while program.iteration():

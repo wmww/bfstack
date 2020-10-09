@@ -5,7 +5,7 @@ from typing import List, Optional, Callable
 from assertion_ctx import AssertionCtx
 
 class Program:
-    def __init__(self, tape: Tape, code: List[Instruction], output_fn: Callable[[str], None], input_fn: Callable[[], str]):
+    def __init__(self, tape: Tape, code: List[Instruction], output_fn: Callable[[str], None], input_fn: Optional[Callable[[], str]]):
         self.tape = tape
         self.code = code
         self.current = 0
@@ -13,6 +13,7 @@ class Program:
         self.emulated_ops = 0
         self.real_ops = 0
         self.unmatched_output: List[int] = []
+        self.queued_input: List[int] = []
         self._output = output_fn
         self._input = input_fn
         self.assertion_ctx = AssertionCtx()
@@ -30,7 +31,12 @@ class Program:
         self._output(chr(value))
 
     def get_input(self) -> str:
-        c = self._input()
+        if self._input:
+            c = self._input()
+        elif self.queued_input:
+            c = chr(self.queued_input.pop(0))
+        else:
+            raise RuntimeError('No queueud input')
         assert len(c) == 1, 'Invalid input: ' + repr(c)
         return c
 
