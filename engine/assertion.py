@@ -38,11 +38,12 @@ class VariableMatcher(Matcher):
         return ctx.random_byte() # TODO
 
 class LiteralMatcher(Matcher):
-    def __init__(self, value: int):
+    def __init__(self, text: str, value: int):
+        self._text = text
         self._value = value
 
     def __str__(self):
-        return str(self._value)
+        return self._text + ' (' + str(self._value) + ')'
 
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
         return self._value == value
