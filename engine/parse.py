@@ -1,5 +1,5 @@
 from instruction import Instruction
-from assertion import TapeAssertion, OutputAssertion, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
+from assertion import TapeAssertion, OutputAssertion, TestInput, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
 from op import Op, op_set
 from source_file import SourceFile
 from args import Args
@@ -78,18 +78,27 @@ def _output_assertion(text: str) -> OutputAssertion:
         matchers.append(_matcher(matcher_str))
     return OutputAssertion(matchers)
 
+def _test_input(text: str) -> TestInput:
+    matcher_strs = text.split()
+    matchers: List[Matcher] = []
+    for matcher_str in matcher_strs:
+        matchers.append(_matcher(matcher_str))
+    return TestInput(matchers)
+
 def _line(line: str, number: int, args: Args) -> List[Instruction]:
     line = line.strip()
     if not line:
         return []
     code = _code(line, number + 1, 0)
-    if args.assertions and line[0] in ('=', ':'):
+    if args.assertions and line[0] in ('=', ':', '$'):
         if code:
             raise RuntimeError('Brainfuck code in assertion line ' + str(number))
         if line[0] == '=':
             return [_tape_assertion(line[1:].strip())]
         elif line[0] == ':':
             return [_output_assertion(line[1:].strip())]
+        elif line[0] == '$':
+            return [_test_input(line[1:].strip())]
         else:
             assert False, 'unreachable'
     else:

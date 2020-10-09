@@ -129,3 +129,20 @@ class OutputAssertion(Instruction):
 
     def loop_level_change(self) -> int:
         return 0
+
+class TestInput(Instruction):
+    def __init__(self, matchers: Sequence[Matcher]):
+        self._matchers = matchers
+
+    def __str__(self):
+        return '$ ' + ' '.join(str(m) for m in self._matchers)
+
+    def run(self, program: Program):
+        program.real_ops += 1
+        for m in self._matchers:
+            program.real_ops += 1
+            value = m.random_matching(program.assertion_ctx)
+            program.queued_input.append(value)
+
+    def loop_level_change(self) -> int:
+        return 0
