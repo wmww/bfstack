@@ -21,15 +21,19 @@ def run_test_code(self, source_path, expect_fail):
     code = parse.source(source_file, args)
     tape = Tape(0, [])
     program = Program(tape, code, output_fn, None)
+    error = None
     try:
         while program.iteration():
             pass
         program.finalize()
-        if expect_fail:
-            assert False, 'Test passed unexpectedly, tape: ' + str(tape)
     except RuntimeError as e:
+        error = e
+    if error is None:
+        if expect_fail:
+            self.fail('Test passed unexpectedly, tape: ' + str(tape))
+    else:
         if not expect_fail:
-            assert False, 'Test failed: ' + str(e) + ', tape: ' + str(tape)
+            self.fail('Test failed: ' + str(error))
 
 def scan_test_files() -> List[Tuple[str, str]]:
     test_dir = os.path.dirname(os.path.realpath(__file__)) + '/tests/'
