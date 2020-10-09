@@ -46,10 +46,10 @@ def _matcher(text: str) -> Matcher:
     if text == '*':
         return WildcardMatcher()
     if text.startswith('@'):
-        return LiteralMatcher(_character_literal(text[1:]))
+        return LiteralMatcher(text, _character_literal(text[1:]))
     number_matches = re.findall('^[0-9]+$', text)
     if number_matches:
-        return LiteralMatcher(int(text))
+        return LiteralMatcher(text, int(text))
     ident_matches = re.findall('^[a-zA-Z_][a-zA-Z_0-9]*$', text)
     if ident_matches:
         return VariableMatcher(text)
