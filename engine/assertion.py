@@ -6,16 +6,20 @@ from assertion_ctx import AssertionCtx
 from typing import Sequence, Optional
 
 class FailedError(RuntimeError):
-    def __init__(self, state, actual: Optional[Tape], message: Optional[str]):
+    def __init__(self, state, actual: Optional[Tape], message: Optional[str], ctx: AssertionCtx):
         msg = '\nFailed: ' + str(state)
         if actual:
             msg += '\nActual:   ' + str(actual)
+        msg += '\n' + repr(ctx.bound_vars)
         if message:
             msg += '\n' + message
         super().__init__(msg)
 
 class Matcher:
     def __str__(self):
+        raise NotImplementedError()
+
+    def bind(self, ctx: AssertionCtx, value: int):
         raise NotImplementedError()
 
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
@@ -31,8 +35,15 @@ class VariableMatcher(Matcher):
     def __str__(self):
         return str(self._name)
 
+    def bind(self, ctx: AssertionCtx, value: int):
+        if self._name not in ctx.bound_vars:
+            ctx.bound_vars[self._name] = value
+
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
-        return True # TODO
+        ctx.used_vars.add(self._name)
+        if self._name not in ctx.bound_vars:
+            raise RuntimeError('Unbound variable \'' + str(self._name) + '\'')
+        return ctx.bound_vars[self._name] == value
 
     def random_matching(self, ctx: AssertionCtx) -> int:
         return ctx.random_byte() # TODO
@@ -45,6 +56,9 @@ class LiteralMatcher(Matcher):
     def __str__(self):
         return self._text + ' (' + str(self._value) + ')'
 
+    def bind(self, ctx: AssertionCtx, value: int):
+        pass
+
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
         return self._value == value
 
@@ -54,6 +68,9 @@ class LiteralMatcher(Matcher):
 class WildcardMatcher(Matcher):
     def __str__(self):
         return '*'
+
+    def bind(self, ctx: AssertionCtx, value: int):
+        pass
 
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
         return True
@@ -67,6 +84,9 @@ class InverseMatcher(Matcher):
 
     def __str__(self):
         return '!' + str(self._inner)
+
+    def bind(self, ctx: AssertionCtx, value: int):
+        pass
 
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
         return not self._inner.matches(ctx, value)
@@ -99,13 +119,16 @@ class TapeAssertion(Instruction):
     def run(self, program: Program):
         program.real_ops += 1
         if program.tape.get_position() < self._offset_of_current:
-            raise FailedError(self, None, 'too far left')
+            raise FailedError(self, None, 'too far left', program.assertion_ctx)
         actual = [program.tape.get_value(i - self._offset_of_current) for i in range(len(self._cells))]
+        for i, cell in enumerate(self._cells):
+            cell.bind(program.assertion_ctx, actual[i])
         for i, cell in enumerate(self._cells):
             program.real_ops += 1
             if not cell.matches(program.assertion_ctx, actual[i]):
                 actual_tape = Tape(self._offset_of_current, actual)
-                raise FailedError(self, actual_tape, None)
+                raise FailedError(self, actual_tape, None, program.assertion_ctx)
+        program.assertion_ctx.remove_unused_vars()
 
     def loop_level_change(self) -> int:
         return 0
@@ -121,12 +144,12 @@ class OutputAssertion(Instruction):
         program.real_ops += 1
         for matcher in self._matchers:
             if len(program.unmatched_output) == 0:
-                raise FailedError(self, None, 'insufficient output')
+                raise FailedError(self, None, 'insufficient output', program.assertion_ctx)
             value = program.unmatched_output.pop(0)
             if not matcher.matches(program.assertion_ctx, value):
-                raise FailedError(self, None, 'output ' + str(value) + ' does not match ' + str(matcher))
+                raise FailedError(self, None, 'output ' + str(value) + ' does not match ' + str(matcher), program.assertion_ctx)
         if len(program.unmatched_output) != 0:
-            raise FailedError(self, None, 'some output not matched: ' + repr(program.unmatched_output))
+            raise FailedError(self, None, 'some output not matched: ' + repr(program.unmatched_output), program.assertion_ctx)
 
     def loop_level_change(self) -> int:
         return 0
