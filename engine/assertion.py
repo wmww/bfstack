@@ -54,7 +54,10 @@ class LiteralMatcher(Matcher):
         self._value = value
 
     def __str__(self):
-        return self._text + ' (' + str(self._value) + ')'
+        text = self._text
+        if text != str(self._value):
+            text += ':' + str(self._value)
+        return text
 
     def bind(self, ctx: AssertionCtx, value: int):
         pass
