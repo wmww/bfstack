@@ -21,6 +21,9 @@ class Matcher:
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
         raise NotImplementedError()
 
+    def random_matching(self, ctx: AssertionCtx) -> int:
+        raise NotImplementedError()
+
 class VariableMatcher(Matcher):
     def __init__(self, name: str):
         self._name = name
@@ -30,6 +33,9 @@ class VariableMatcher(Matcher):
 
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
         return True # TODO
+
+    def random_matching(self, ctx: AssertionCtx) -> int:
+        return ctx.random_byte() # TODO
 
 class LiteralMatcher(Matcher):
     def __init__(self, value: int):
@@ -41,12 +47,18 @@ class LiteralMatcher(Matcher):
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
         return self._value == value
 
+    def random_matching(self, ctx: AssertionCtx) -> int:
+        return self._value
+
 class WildcardMatcher(Matcher):
     def __str__(self):
         return '*'
 
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
         return True
+
+    def random_matching(self, ctx: AssertionCtx) -> int:
+        return ctx.random_byte()
 
 class InverseMatcher(Matcher):
     def __init__(self, inner: Matcher):
@@ -57,6 +69,16 @@ class InverseMatcher(Matcher):
 
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
         return not self._inner.matches(ctx, value)
+
+    def random_matching(self, ctx: AssertionCtx) -> int:
+        for i in range(256):
+            v = ctx.random_byte()
+            if not self._inner.matches(ctx, v):
+                return v
+        for i in range(256):
+            if not self._inner.matches(ctx, i):
+                return i
+        raise RuntimeError('Literally nothing matches ' + str(self))
 
 class TapeAssertion(Instruction):
     def __init__(self, cells: Sequence[Matcher], offset_of_current: int):
