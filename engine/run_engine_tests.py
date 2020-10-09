@@ -47,24 +47,17 @@ def build_test_runner(source_path, expect_fail):
         run_test_code(self, source_path, expect_fail)
     return fn
 
-def get_test_cases() -> List:
+def construct_test_class(cls) -> List:
     test_files = scan_test_files()
-    method_map = {}
     for name, source_path in test_files:
         expect_fail = name.endswith('_fails')
         runner = build_test_runner(source_path, expect_fail)
-        method_map['test_' + name] = runner
-    return [
-        type('TestSourceFiles', (TestCase, ), method_map),
-    ]
+        setattr(cls, 'test_' + name, runner)
+    return cls
 
-def load_tests(loader, tests, pattern):
-    '''Called automatically by unittest.main()'''
-    suite = TestSuite()
-    for test_class in get_test_cases():
-        tests = loader.loadTestsFromTestCase(test_class)
-        suite.addTests(tests)
-    return suite
+@construct_test_class
+class TestSourceFiles(TestCase):
+    pass
 
 if __name__ == '__main__':
     unittest.main()
