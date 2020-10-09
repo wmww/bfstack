@@ -43,9 +43,12 @@ def main():
     logger.info('Took ' + str(round(program_start_time - load_start_time, 2)) + 's to load program')
     failed = False
     try:
+        logger.info('Program output:')
         while program.iteration():
             pass
         program.finalize()
+        print()
+        logger.info('Program done')
     except:
         failed = True
         print()
