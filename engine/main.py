@@ -41,6 +41,7 @@ def main():
     logger.info('Took ' + str(round(program_start_time - load_start_time, 2)) + 's to load program')
     while program.iteration():
         pass
+    program.finalize()
     program_end_time = time.time()
     logger.info('Took ' + str(round(program_end_time - program_start_time - input_time, 2)) + 's run the program' +
             ' (plus ' + str(round(input_time, 2)) + 's waiting for input)')

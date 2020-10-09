@@ -25,12 +25,14 @@ def run_test_code(self, source_path, expect_fail):
         try:
             while program.iteration():
                 pass
+            program.finalize()
         except RuntimeError as e:
             return
         assert False, 'Test passed unexpectedly, tape: ' + str(tape)
     else:
         while program.iteration():
             pass
+        program.finalize()
 
 def scan_test_files() -> List[Tuple[str, str]]:
     test_dir = os.path.dirname(os.path.realpath(__file__)) + '/tests/'
