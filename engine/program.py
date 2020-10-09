@@ -46,3 +46,7 @@ class Program:
             return False
         instruction.run(self)
         return True
+
+    def finalize(self):
+        if self.queued_input and not self._input:
+            raise RuntimeError('Program finalized with ' + str(len(self.queued_input)) + ' unconsumed test inputs')
