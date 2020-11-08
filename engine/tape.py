@@ -1,10 +1,7 @@
+from errors import TooFarLeftError
 from typing import List
 
 MAX_PRINT_LEN = 64
-
-class TooFarLeftError(RuntimeError):
-    def __init__(self):
-        super().__init__('Too far left')
 
 class Tape:
     def __init__(self, position: int, data: List[int]):

@@ -44,14 +44,11 @@ class Op(Instruction):
                 level = 1
                 while level > 0:
                     instr = program.next_instruction()
-                    if instr is None:
-                        raise RuntimeError('Unmatched \'[\'')
+                    assert instr is not None, 'Unmatched \'[\' (should have been caught in parsing)'
                     level += instr.loop_level_change()
-                if level != 0:
-                    raise RuntimeError('Failed to find exact loop match')
+                assert level == 0, 'Failed to find exact loop match (should have been caught in parsing)'
         elif op == ']':
-            if not program.stack:
-                raise RuntimeError('Unmatched \']\'')
+            assert program.stack, 'Unmatched \']\' (should have been caught in parsing)'
             if program.tape.get_value(0):
                 program.current = program.stack[-1]
             else:

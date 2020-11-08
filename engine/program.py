@@ -1,5 +1,6 @@
 from tape import Tape
 from instruction import Instruction
+from errors import ProgramError
 
 from typing import List, Optional, Callable
 from assertion_ctx import AssertionCtx
@@ -34,7 +35,7 @@ class Program:
         elif self.queued_input:
             c = chr(self.queued_input.pop(0))
         else:
-            raise RuntimeError('No queueud input')
+            raise ProgramError('No queueud input')
         assert len(c) == 1, 'Invalid input: ' + repr(c)
         return c
 
@@ -46,5 +47,6 @@ class Program:
         return True
 
     def finalize(self):
+        assert len(self.stack) == 0, 'Program exited with unmatched \'[\' (should have been caught in parsing)'
         if self.queued_input and not self._input:
-            raise RuntimeError('Program finalized with ' + str(len(self.queued_input)) + ' unconsumed test inputs')
+            raise ProgramError('Program finalized with ' + str(len(self.queued_input)) + ' unconsumed test inputs')

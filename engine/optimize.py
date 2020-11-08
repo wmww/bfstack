@@ -22,6 +22,7 @@ class Block(Instruction):
         return not self._values and self._offset == 0
 
     def add_op(self, op: Instruction) -> bool:
+        '''Returns true if the op was successfully added'''
         if not isinstance(op, Op):
             return False
         if op == '+':

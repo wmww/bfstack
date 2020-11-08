@@ -2,17 +2,19 @@ from instruction import Instruction
 from program import Program
 from tape import Tape
 from assertion_ctx import AssertionCtx
+from errors import TestError
 
 from typing import Sequence, Optional
 
-class FailedError(RuntimeError):
+class AssertionFailedError(TestError):
     def __init__(self, state, actual: Optional[Tape], message: Optional[str], ctx: AssertionCtx):
-        msg = '\nFailed: ' + str(state)
+        msg = '\n  Failed: ' + str(state)
         if actual:
-            msg += '\nActual:   ' + str(actual)
-        msg += '\n' + repr(ctx.bound_vars)
+            msg += '\n  Actual:   ' + str(actual)
+        if ctx.bound_vars:
+            msg += '\n  ' + repr(ctx.bound_vars)
         if message:
-            msg += '\n' + message
+            msg += '\n  ' + message
         super().__init__(msg)
 
 class Matcher:
@@ -42,7 +44,7 @@ class VariableMatcher(Matcher):
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
         ctx.used_vars.add(self._name)
         if self._name not in ctx.bound_vars:
-            raise RuntimeError('Unbound variable \'' + str(self._name) + '\'')
+            raise TestError('Unbound variable \'' + str(self._name) + '\'')
         return ctx.bound_vars[self._name] == value
 
     def random_matching(self, ctx: AssertionCtx) -> int:
@@ -102,7 +104,7 @@ class InverseMatcher(Matcher):
         for i in range(256):
             if not self._inner.matches(ctx, i):
                 return i
-        raise RuntimeError('Literally nothing matches ' + str(self))
+        raise TestError('Literally nothing matches ' + str(self))
 
 class TapeAssertion(Instruction):
     def __init__(self, cells: Sequence[Matcher], offset_of_current: int):
@@ -122,7 +124,7 @@ class TapeAssertion(Instruction):
     def run(self, program: Program):
         program.real_ops += 1
         if program.tape.get_position() < self._offset_of_current:
-            raise FailedError(self, None, 'too far left', program.assertion_ctx)
+            raise AssertionFailedError(self, None, 'too far left', program.assertion_ctx)
         actual = [program.tape.get_value(i - self._offset_of_current) for i in range(len(self._cells))]
         for i, cell in enumerate(self._cells):
             cell.bind(program.assertion_ctx, actual[i])
@@ -130,7 +132,7 @@ class TapeAssertion(Instruction):
             program.real_ops += 1
             if not cell.matches(program.assertion_ctx, actual[i]):
                 actual_tape = Tape(self._offset_of_current, actual)
-                raise FailedError(self, actual_tape, None, program.assertion_ctx)
+                raise AssertionFailedError(self, actual_tape, None, program.assertion_ctx)
         program.assertion_ctx.remove_unused_vars()
 
     def loop_level_change(self) -> int:
@@ -146,7 +148,7 @@ class TestInput(Instruction):
     def run(self, program: Program):
         program.real_ops += 1
         if program.queued_input:
-            raise RuntimeError('Test input given with ' + str(len(program.queued_input)) + ' unconsumed inputs')
+            raise TestError('Test input given with ' + str(len(program.queued_input)) + ' unconsumed inputs')
         for m in self._matchers:
             program.real_ops += 1
             value = m.random_matching(program.assertion_ctx)
