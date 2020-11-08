@@ -2,6 +2,7 @@ from instruction import Instruction
 from op import Op
 from program import Program
 from tape import TooFarLeftError
+from source_file import Span
 
 from typing import List, cast
 from collections import defaultdict
@@ -14,9 +15,10 @@ class Block(Instruction):
         self._required_left_room = 0
         self._emulated_ops = 0
         self._is_unrolled_loop = False
+        self._span = None
 
     def __str__(self):
-        return self._code
+        return self._code + ' @ ' + str(self._span)
 
     def is_empty(self):
         return not self._values and self._offset == 0
@@ -49,6 +51,10 @@ class Block(Instruction):
             self._values.pop(self._offset)
 
         self._emulated_ops += 1
+        if not self._span:
+            self._span = op.span()
+        else:
+            self._span.extend_to(op.span())
 
         return True
 
@@ -78,6 +84,9 @@ class Block(Instruction):
 
     def loop_level_change(self) -> int:
         return 0
+
+    def span(self) -> Span:
+        return self._span
 
 def optimize(code: List[Instruction]):
     current = Block()
