@@ -3,6 +3,7 @@ from program import Program
 from tape import Tape
 from assertion_ctx import AssertionCtx
 from errors import TestError
+from source_file import Span
 
 from typing import Sequence, Optional
 
@@ -107,9 +108,10 @@ class InverseMatcher(Matcher):
         raise TestError('Literally nothing matches ' + str(self))
 
 class TapeAssertion(Instruction):
-    def __init__(self, cells: Sequence[Matcher], offset_of_current: int):
+    def __init__(self, cells: Sequence[Matcher], offset_of_current: int, span: Span):
         self._cells = cells
         self._offset_of_current = offset_of_current
+        self._span = span
 
     def __str__(self):
         result = '= '
@@ -138,9 +140,13 @@ class TapeAssertion(Instruction):
     def loop_level_change(self) -> int:
         return 0
 
+    def span(self) -> Span:
+        return self._span
+
 class TestInput(Instruction):
-    def __init__(self, matchers: Sequence[Matcher]):
+    def __init__(self, matchers: Sequence[Matcher], span: Span):
         self._matchers = matchers
+        self._span = span
 
     def __str__(self):
         return '$ ' + ' '.join(str(m) for m in self._matchers)
@@ -156,3 +162,6 @@ class TestInput(Instruction):
 
     def loop_level_change(self) -> int:
         return 0
+
+    def span(self) -> Span:
+        return self._span

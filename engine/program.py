@@ -43,7 +43,12 @@ class Program:
         instruction = self.next_instruction()
         if instruction is None:
             return False
-        instruction.run(self)
+        try:
+            instruction.run(self)
+        except ProgramError as e:
+            if e.span() is None:
+                e.set_span(instruction.span())
+            raise
         return True
 
     def finalize(self):

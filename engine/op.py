@@ -1,17 +1,17 @@
+from source_file import Span
 from instruction import Instruction
 from program import Program
 
 op_set = set(['+', '-', '<', '>', '[', ']', '.', ','])
 
 class Op(Instruction):
-    def __init__(self, line: int, col: int, op: str):
+    def __init__(self, op: str, span: Span):
         assert op in op_set, 'Invalid operation ' + op
-        self._line = line
-        self._col = col
         self._op = op
+        self._span = span
 
     def __str__(self):
-        return self.op + ' @ ' + str(self._line) + ':' + str(self._col)
+        return self._op
 
     def __eq__(self, other):
         if isinstance(other, Op):
@@ -63,3 +63,6 @@ class Op(Instruction):
             return -1
         else:
             return 0
+
+    def span(self) -> Span:
+        return self._span

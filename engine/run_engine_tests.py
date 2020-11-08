@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from args import Args
-from source_file import SourceFile
+from source_file import SourceFile, Span
 from program import Program
 from tape import Tape
 import parse
