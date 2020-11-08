@@ -5,6 +5,7 @@ from source_file import SourceFile
 from program import Program
 from tape import Tape
 import parse
+from errors import ProgramError, ParseError
 
 from typing import List, Tuple
 import os
@@ -17,16 +18,17 @@ def output_fn(c: str):
 def run_test_code(self, source_path, expect_fail):
     args = Args()
     args.source_path = source_path
+    args.run_tests = True
     source_file = SourceFile(args)
-    code = parse.source(source_file, args)
-    tape = Tape(0, [])
-    program = Program(tape, code, output_fn, None)
     error = None
     try:
+        code = parse.source(source_file, args)
+        tape = Tape(0, [])
+        program = Program(tape, code, output_fn, None)
         while program.iteration():
             pass
         program.finalize()
-    except RuntimeError as e:
+    except (ProgramError, ParseError) as e:
         error = e
     if error is None:
         if expect_fail:

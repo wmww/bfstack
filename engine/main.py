@@ -5,11 +5,11 @@ from source_file import SourceFile
 from program import Program
 from tape import Tape
 import parse
+from errors import ProgramError, ParseError
 
 import sys
 import time
 import logging
-import traceback
 from typing import List
 
 logger = logging.getLogger(__name__)
@@ -32,36 +32,39 @@ def input_fn() -> str:
 def main():
     args = Args()
     args.parse(sys.argv[1:]) # strip off the first argument (program name)
+    program = None
     if args.show_info:
         logging.basicConfig(level=logging.INFO)
-    load_start_time = time.time()
-    source_file = SourceFile(args)
-    code = parse.source(source_file, args)
-    tape = Tape(0, [])
-    program = Program(tape, code, output_fn, input_fn)
-    program_start_time = time.time()
-    logger.info('Took ' + str(round(program_start_time - load_start_time, 2)) + 's to load program')
-    failed = False
     try:
+        load_start_time = time.time()
+        source_file = SourceFile(args)
+        code = parse.source(source_file, args)
+        tape = Tape(0, [])
+        program = Program(tape, code, output_fn, input_fn)
+        program_start_time = time.time()
+        logger.info('Took ' + str(round(program_start_time - load_start_time, 2)) + 's to load program')
         logger.info('Program output:')
         while program.iteration():
             pass
         program.finalize()
         print()
         logger.info('Program done')
-    except:
-        failed = True
+    except ParseError as e:
+        logger.error('Syntax error: ' + str(e))
+        exit(1) # will still run the finally: block
+    except ProgramError as e:
         print()
-        traceback.print_exc()
-        print()
-    program_end_time = time.time()
-    logger.info('Took ' + str(round(program_end_time - program_start_time - input_time, 2)) + 's run the program' +
-            ' (plus ' + str(round(input_time, 2)) + 's waiting for input)')
-    logger.info('Ran ' + str(program.emulated_ops) + ' virtual brainfuck operations')
-    logger.info('Ran ' + str(program.real_ops) + ' real constant time operations')
-    logger.info('Tape: ' + str(tape))
-    if failed:
-        exit(1)
+        logger.error('Program failed: ' + str(e))
+        exit(1) # will still run the finally: block
+    finally:
+        if program:
+            program_end_time = time.time()
+            logger.info(
+                'Took ' + str(round(program_end_time - program_start_time - input_time, 2)) + 's to run the program' +
+                ' (plus ' + str(round(input_time, 2)) + 's waiting for input)')
+            logger.info('Ran ' + str(program.emulated_ops) + ' virtual brainfuck operations')
+            logger.info('Ran ' + str(program.real_ops) + ' real constant time operations')
+            logger.info('Tape: ' + str(tape))
 
 if __name__ == '__main__':
     main();

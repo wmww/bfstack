@@ -4,6 +4,7 @@ from op import Op, op_set
 from source_file import SourceFile
 from args import Args
 import optimize
+from errors import ParseError
 
 import re
 from typing import List
@@ -33,11 +34,11 @@ escapes = {
 def _character_literal(text: str) -> int:
     if text.startswith('\\'):
         if len(text) != 2 or text[1] not in escapes:
-            raise RuntimeError('Invalid escape sequence: "' + text + '"')
+            raise ParseError('Invalid escape sequence: "' + text + '"')
         return ord(escapes[text[1]])
     else:
         if len(text) > 1:
-            raise RuntimeError('Invalid character literal: "' + text + '"')
+            raise ParseError('Invalid character literal: "' + text + '"')
         return ord(text)
 
 def _matcher(text: str) -> Matcher:
@@ -53,7 +54,7 @@ def _matcher(text: str) -> Matcher:
     ident_matches = re.findall('^[a-zA-Z_][a-zA-Z_0-9]*$', text)
     if ident_matches:
         return VariableMatcher(text)
-    raise RuntimeError('Invalid assertion cell: "' + text + '"')
+    raise ParseError('Invalid assertion cell: "' + text + '"')
 
 def _tape_assertion(text: str) -> TapeAssertion:
     cell_strs = text.split()
@@ -62,13 +63,13 @@ def _tape_assertion(text: str) -> TapeAssertion:
     for cell_str in cell_strs:
         if cell_str.startswith('`'):
             if offset_of_current is not None:
-                raise RuntimeError('Assertion "' + text + '" has multiple current cells')
+                raise ParseError('Assertion "' + text + '" has multiple current cells')
             offset_of_current = len(cells)
             cell_str = cell_str[1:]
         cell = _matcher(cell_str)
         cells.append(cell)
     if offset_of_current is None:
-        raise RuntimeError('Assertion "' + text + '" has no current cell')
+        raise ParseError('Assertion "' + text + '" has no current cell')
     return TapeAssertion(cells, offset_of_current)
 
 def _test_input(text: str) -> TestInput:
@@ -85,7 +86,7 @@ def _line(line: str, number: int, args: Args) -> List[Instruction]:
     code = _code(line, number + 1, 0)
     if args.assertions and line[0] in ('=', '$'):
         if code:
-            raise RuntimeError('Brainfuck code in assertion line ' + str(number))
+            raise ParseError('Brainfuck code in assertion line ' + str(number))
         if line[0] == '=':
             return [_tape_assertion(line[1:].strip())]
         elif line[0] == '$':
@@ -101,13 +102,22 @@ def source(source_file: SourceFile, args: Args) -> List[Instruction]:
     for i, line in enumerate(source_file.contents().splitlines()):
         try:
             code += _line(line, i, args)
-        except RuntimeError as err:
-            errors.append(str(source_file) + ':' + str(i) + ': ' + str(err))
-    # TODO: notice unmatched braces here
+        except ParseError as error:
+            errors.append((i, error))
+    level = 0
+    for instr in code:
+        level += instr.loop_level_change()
+        if level < 0:
+            level = 0
+            errors.append((0, ParseError('Unmatched "]"')))
+    while level > 0:
+        errors.append((0, ParseError('Unmatched "["')))
+        level -= 1
     if errors:
-        message = str(len(errors)) + ' error' + ('s' if len(errors) > 1 else '') + ':'
-        message += ''.join('\n\n' + error for error in errors)
-        raise RuntimeError(message)
+        message = str(len(errors)) + ' error' + ('s' if len(errors) != 1 else '') + ':'
+        for line, error in errors:
+            message += '\n\n' + str(source_file) + ':' + str(line) + ': ' + str(error)
+        raise ParseError(message)
     if args.optimize:
         optimize.optimize(code)
     return code
