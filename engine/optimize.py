@@ -56,10 +56,11 @@ class Block(Instruction):
             return False
         else:
             self._is_unrolled_loop = True
+            self._emulated_ops += 1
             return True
 
     def run(self, program: Program):
-        program.real_ops += 1
+        program.real_ops += 1 + len(self._values)
         if self._required_left_room > program.tape.get_position():
             raise TooFarLeftError()
         if self._is_unrolled_loop:
@@ -67,12 +68,11 @@ class Block(Instruction):
         else:
             multiplier = 1
         for key, val in self._values.items():
-            program.real_ops += 1
             program.tape.set_value(key, program.tape.get_value(key) + val * multiplier)
         program.tape.move_by(self._offset)
         emulated_ops = self._emulated_ops * multiplier
         if self._is_unrolled_loop:
-            emulated_ops += 2
+            emulated_ops += 1
         program.emulated_ops += emulated_ops
 
     def loop_level_change(self) -> int:
