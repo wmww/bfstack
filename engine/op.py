@@ -39,10 +39,10 @@ class Op(Instruction):
             program.tape.set_value(0, program.io.pull_input())
         elif op == '[':
             if program.tape.get_value(0) == 0:
-                program.current = program.find_matching_loop(program.current)
+                program.current = program.matching_loop(program.current)
         elif op == ']':
             if program.tape.get_value(0) != 0:
-                program.current = program.find_matching_loop(program.current)
+                program.current = program.matching_loop(program.current)
         else:
             assert False, 'Invalid operation ' + repr(op)
 
