@@ -6,6 +6,7 @@ from program import Program
 from tape import Tape
 import parse
 from io_interface import Io
+from run import run
 from errors import ProgramError, ParseError, TestError
 
 from typing import List, Tuple
@@ -32,20 +33,17 @@ class TestIo(Io):
         else:
             self.queue = values
 
+    def time_waiting_for_input(self) -> float:
+        return 0.0
+
 def run_test_code(self, source_path, expect_fail):
     args = Args()
     args.source_path = source_path
     args.run_tests = True
-    source_file = SourceFile(args)
     io = TestIo()
     error = None
     try:
-        code = parse.source(source_file, args)
-        tape = Tape(0, [])
-        program = Program(tape, code, io)
-        while program.iteration():
-            pass
-        program.finalize()
+        run(args, io)
         if io.queue:
             raise TestError('Program finalized with ' + str(len(io.queue)) + ' unconsumed test inputs')
     except (ProgramError, ParseError) as e:

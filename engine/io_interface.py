@@ -9,3 +9,6 @@ class Io:
 
     def queue_input(self, value: List[int]):
         raise NotImplementedError()
+
+    def time_waiting_for_input(self) -> float:
+        raise NotImplementedError()
