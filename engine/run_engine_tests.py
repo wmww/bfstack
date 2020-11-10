@@ -5,29 +5,49 @@ from source_file import SourceFile, Span
 from program import Program
 from tape import Tape
 import parse
-from errors import ProgramError, ParseError
+from io_interface import Io
+from errors import ProgramError, ParseError, TestError
 
 from typing import List, Tuple
 import os
 import unittest
 from unittest import TestCase, TestSuite, TestResult
 
-def output_fn(c: str):
-    pass
+class TestIo(Io):
+    def __init__(self):
+        self.queue: List[int] = []
+
+    def push_output(self, value: int):
+        pass
+
+    def pull_input(self) -> int:
+        if self.queue:
+            return self.queue.pop(0)
+        else:
+            raise TestError('Input requested without test input being queued')
+
+    def queue_input(self, values: List[int]):
+        if self.queue:
+            raise TestError('Test input given with ' + str(len(self.queue)) + ' unconsumed inputs')
+        else:
+            self.queue = values
 
 def run_test_code(self, source_path, expect_fail):
     args = Args()
     args.source_path = source_path
     args.run_tests = True
     source_file = SourceFile(args)
+    io = TestIo()
     error = None
     try:
         code = parse.source(source_file, args)
         tape = Tape(0, [])
-        program = Program(tape, code, output_fn, None)
+        program = Program(tape, code, io)
         while program.iteration():
             pass
         program.finalize()
+        if io.queue:
+            raise TestError('Program finalized with ' + str(len(io.queue)) + ' unconsumed test inputs')
     except (ProgramError, ParseError) as e:
         error = e
     if error is None:
