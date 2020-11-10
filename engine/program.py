@@ -1,10 +1,10 @@
 from tape import Tape
 from instruction import Instruction
 from errors import ProgramError
-from io_interface import Io
+from io_interface  import Io
+from assertion_ctx import AssertionCtx
 
 from typing import List, Optional, Callable
-from assertion_ctx import AssertionCtx
 
 class Program:
     def __init__(self, tape: Tape, code: List[Instruction], io: Io):
