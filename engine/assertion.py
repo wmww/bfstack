@@ -5,11 +5,11 @@ from assertion_ctx import AssertionCtx
 from errors import TestError
 from span import Span
 
-from typing import Sequence, Optional, List
+from typing import Sequence, Optional, List, Set
 
 class AssertionFailedError(TestError):
     def __init__(self, state, actual: Optional[Tape], message: Optional[str], ctx: AssertionCtx):
-        msg = '\n  Failed: ' + str(state)
+        msg = '  Failed: ' + str(state)
         if actual:
             msg += '\n  Actual:   ' + str(actual)
         if ctx.bound_vars:
@@ -28,6 +28,9 @@ class Matcher:
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
         raise NotImplementedError()
 
+    def used_variables(self) -> Optional[Set[str]]:
+        raise NotImplementedError()
+
     def random_matching(self, ctx: AssertionCtx) -> int:
         raise NotImplementedError()
 
@@ -43,13 +46,18 @@ class VariableMatcher(Matcher):
             ctx.bound_vars[self._name] = value
 
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
-        ctx.used_vars.add(self._name)
         if self._name not in ctx.bound_vars:
-            raise TestError('Unbound variable \'' + str(self._name) + '\'')
+            raise TestError('Unbound variable \'' + str(self._name) + '\' can not be matched against ' + str(value))
         return ctx.bound_vars[self._name] == value
 
+    def used_variables(self) -> Optional[Set[str]]:
+        return set([self._name])
+
     def random_matching(self, ctx: AssertionCtx) -> int:
-        return ctx.random_byte() # TODO
+        if self._name in ctx.bound_vars:
+            return ctx.bound_vars[self._name]
+        else:
+            raise TestError('Can not create matching value for unbound variable \'' + str(self._name) + '\'')
 
 class LiteralMatcher(Matcher):
     def __init__(self, text: str, value: int):
@@ -68,6 +76,9 @@ class LiteralMatcher(Matcher):
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
         return self._value == value
 
+    def used_variables(self) -> Optional[Set[str]]:
+        return None
+
     def random_matching(self, ctx: AssertionCtx) -> int:
         return self._value
 
@@ -80,6 +91,9 @@ class WildcardMatcher(Matcher):
 
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
         return True
+
+    def used_variables(self) -> Optional[Set[str]]:
+        return None
 
     def random_matching(self, ctx: AssertionCtx) -> int:
         return ctx.random_byte()
@@ -97,6 +111,9 @@ class InverseMatcher(Matcher):
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
         return not self._inner.matches(ctx, value)
 
+    def used_variables(self) -> Optional[Set[str]]:
+        return self._inner.used_variables()
+
     def random_matching(self, ctx: AssertionCtx) -> int:
         for i in range(256):
             v = ctx.random_byte()
@@ -112,6 +129,11 @@ class TapeAssertion(Instruction):
         self._cells = cells
         self._offset_of_current = offset_of_current
         self._span = span
+        self._used_variables: Set[str] = set()
+        for cell in cells:
+            used = cell.used_variables()
+            if used is not None:
+                self._used_variables = self._used_variables.union(used)
 
     def __str__(self):
         result = '= '
@@ -135,13 +157,22 @@ class TapeAssertion(Instruction):
             if not cell.matches(program.assertion_ctx, actual[i]):
                 actual_tape = Tape(self._offset_of_current, actual)
                 raise AssertionFailedError(self, actual_tape, None, program.assertion_ctx)
-        program.assertion_ctx.remove_unused_vars()
+        program.assertion_ctx.remove_unused_vars(self._used_variables)
 
     def loop_level_change(self) -> int:
         return 0
 
     def span(self) -> Span:
         return self._span
+
+    def random_matching_tape(self, ctx: AssertionCtx) -> Tape:
+        for var in self._used_variables:
+            if var not in ctx.bound_vars:
+                ctx.bound_vars[var] = ctx.random_byte()
+        data: List[int] = []
+        for cell in self._cells:
+            data.append(cell.random_matching(ctx))
+        return Tape(self._offset_of_current, data)
 
 class TestInput(Instruction):
     def __init__(self, matchers: Sequence[Matcher], span: Span):

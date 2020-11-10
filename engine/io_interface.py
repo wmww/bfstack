@@ -12,3 +12,6 @@ class Io:
 
     def time_waiting_for_input(self) -> float:
         raise NotImplementedError()
+
+    def reset(self):
+        raise NotImplementedError()

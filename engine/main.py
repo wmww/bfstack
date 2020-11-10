@@ -34,6 +34,9 @@ class UserIo(Io):
     def time_waiting_for_input(self) -> float:
         return self.input_time
 
+    def reset(self):
+        pass
+
 def main():
     args = Args()
     args.parse(sys.argv[1:]) # strip off the first argument (program name)

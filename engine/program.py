@@ -14,7 +14,7 @@ class Program:
         self.emulated_ops = 0
         self.real_ops = 0
         self.io = io
-        self.assertion_ctx = AssertionCtx()
+        self.assertion_ctx = AssertionCtx(0) # Use 0 seed by default
         self._cached_loop_pairs: Dict[int, int] = {}
 
     def next_instruction(self) -> Optional[Instruction]:

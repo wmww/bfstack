@@ -115,6 +115,9 @@ def source(source_file: SourceFile, args: Args) -> List[Instruction]:
     code: List[Instruction] = []
     errors: List[ParseError] = []
     span = source_file.span()
+    if args.assertions:
+        # An assertion at the start makes the property tests happy
+        code.append(TapeAssertion([LiteralMatcher('0', 0)], 0, Span(source_file, 0, 0)))
     for sub in _split_on(span, set(['\n'])):
         try:
             code += _line(sub, args)
