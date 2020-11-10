@@ -38,21 +38,11 @@ class Op(Instruction):
         elif op == ',':
             program.tape.set_value(0, program.io.pull_input())
         elif op == '[':
-            if program.tape.get_value(0):
-                program.stack.append(program.current)
-            else:
-                level = 1
-                while level > 0:
-                    instr = program.next_instruction()
-                    assert instr is not None, 'Unmatched \'[\' (should have been caught in parsing)'
-                    level += instr.loop_level_change()
-                assert level == 0, 'Failed to find exact loop match (should have been caught in parsing)'
+            if program.tape.get_value(0) == 0:
+                program.current = program.find_matching_loop(program.current)
         elif op == ']':
-            assert program.stack, 'Unmatched \']\' (should have been caught in parsing)'
-            if program.tape.get_value(0):
-                program.current = program.stack[-1]
-            else:
-                program.stack.pop()
+            if program.tape.get_value(0) != 0:
+                program.current = program.find_matching_loop(program.current)
         else:
             assert False, 'Invalid operation ' + repr(op)
 

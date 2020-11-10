@@ -23,7 +23,6 @@ def run(args: Args, io: Io):
         logger.info('Program output:')
         while program.iteration():
             pass
-        program.finalize()
         logger.info('Program done')
     finally:
         if program:

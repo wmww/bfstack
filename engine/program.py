@@ -10,20 +10,18 @@ class Program:
     def __init__(self, tape: Tape, code: List[Instruction], io: Io):
         self.tape = tape
         self.code = code
-        self.current = 0
-        self.stack: List[int] = []
+        self.current = -1
         self.emulated_ops = 0
         self.real_ops = 0
         self.io = io
         self.assertion_ctx = AssertionCtx()
 
     def next_instruction(self) -> Optional[Instruction]:
-        if self.current >= len(self.code):
+        if self.current >= len(self.code) - 1:
             return None
         else:
-            instruction = self.code[self.current]
             self.current += 1
-            return instruction
+            return self.code[self.current]
 
     def iteration(self) -> bool:
         instruction = self.next_instruction()
@@ -37,5 +35,15 @@ class Program:
             raise
         return True
 
-    def finalize(self):
-        assert len(self.stack) == 0, 'Program exited with unmatched \'[\' (should have been caught in parsing)'
+    def find_matching_loop(self, index: int) -> int:
+        level = self.code[index].loop_level_change()
+        assert level != 0, 'find_matching_loop() on non-loop instruction ' + str(self.code[index])
+        if level > 0:
+            walk = 1
+        elif level < 0:
+            walk = -1
+        while level != 0:
+            index += walk
+            assert index >= 0 and index < len(self.code), 'Unmatched brace (should have been caught in parsing)'
+            level += self.code[index].loop_level_change()
+        return index
