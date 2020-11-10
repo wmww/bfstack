@@ -5,7 +5,7 @@ from assertion_ctx import AssertionCtx
 from errors import TestError
 from source_file import Span
 
-from typing import Sequence, Optional
+from typing import Sequence, Optional, List
 
 class AssertionFailedError(TestError):
     def __init__(self, state, actual: Optional[Tape], message: Optional[str], ctx: AssertionCtx):
@@ -153,12 +153,11 @@ class TestInput(Instruction):
 
     def run(self, program: Program):
         program.real_ops += 1
-        if program.queued_input:
-            raise TestError('Test input given with ' + str(len(program.queued_input)) + ' unconsumed inputs')
+        values: List[int] = []
         for m in self._matchers:
-            program.real_ops += 1
-            value = m.random_matching(program.assertion_ctx)
-            program.queued_input.append(value)
+            values.append(m.random_matching(program.assertion_ctx))
+        program.real_ops += len(values)
+        program.io.queue_input(values)
 
     def loop_level_change(self) -> int:
         return 0
