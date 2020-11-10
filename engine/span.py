@@ -60,7 +60,7 @@ class Span:
     def error_str(self) -> str:
         result = self._source.path() + ':' + str(self.line()) + ':\n'
         result += self._source.line_text(self.line()) + '\n'
-        result += ' ' * (self.col() - 1) + '^' * self.length()
+        result += ' ' * (self.col() - 1) + '^' * self.length() + '\n'
         return result
 
     def extend_to(self, other):

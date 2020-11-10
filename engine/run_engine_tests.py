@@ -33,21 +33,27 @@ class TestIo(Io):
     def time_waiting_for_input(self) -> float:
         return 0.0
 
+    def reset(self):
+        old_queue = self.queue
+        self.queue = []
+        if old_queue:
+            raise TestError('Program finalized with ' + str(len(old_queue)) + ' unconsumed test inputs')
+
 def run_test_code(self, source_path, expect_fail):
     args = Args()
+    self.init_args(args)
     args.source_path = source_path
-    args.run_tests = True
     io = TestIo()
     error = None
+    program = None
     try:
-        run(args, io)
-        if io.queue:
-            raise TestError('Program finalized with ' + str(len(io.queue)) + ' unconsumed test inputs')
+        program = run(args, io)
+        io.reset()
     except (ProgramError, ParseError) as e:
         error = e
     if error is None:
         if expect_fail:
-            self.fail('Test passed unexpectedly, tape: ' + str(tape))
+            self.fail('Test passed unexpectedly, tape: ' + str(program.tape))
     else:
         if not expect_fail:
             self.fail('Test failed: ' + str(error))
@@ -74,8 +80,14 @@ def construct_test_class(cls) -> List:
     return cls
 
 @construct_test_class
-class TestSourceFiles(TestCase):
-    pass
+class UnitTests(TestCase):
+    def init_args(self, args: Args):
+        args.run_tests = True
+
+@construct_test_class
+class PropertyTests(TestCase):
+    def init_args(self, args: Args):
+        pass
 
 if __name__ == '__main__':
     unittest.main()
