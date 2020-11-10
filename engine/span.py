@@ -5,21 +5,25 @@ class Span:
         self._source = source
         self._start_char = start_char
         self._end_char = end_char
+        self._cached_line = None
+        self._cached_col = None
 
     def line(self) -> int:
-        l = 1
-        for c in self._source.contents()[:self._start_char]:
-            if c == '\n':
-                l += 1
-        return l
+        if self._cached_line is None:
+            self._cached_line = 1
+            for c in self._source.contents()[:self._start_char]:
+                if c == '\n':
+                    self._cached_line += 1
+        return self._cached_line
 
     def col(self) -> int:
-        i = 1
-        for c in self._source.contents()[:self._start_char:-1]:
-            if c == '\n':
-                break
-            i += 1
-        return i
+        if self._cached_col is None:
+            self._cached_col = 1
+            for c in self._source.contents()[:self._start_char:-1]:
+                if c == '\n':
+                    break
+                self._cached_col += 1
+        return self._cached_col
 
     def text(self) -> str:
         return self._source.contents()[self._start_char:self._end_char]
