@@ -3,7 +3,7 @@ from program import Program
 from tape import Tape
 from assertion_ctx import AssertionCtx
 from errors import TestError
-from source_file import Span
+from span import Span
 
 from typing import Sequence, Optional, List
 

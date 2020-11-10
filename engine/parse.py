@@ -1,7 +1,8 @@
 from instruction import Instruction
 from assertion import TapeAssertion, TestInput, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
 from op import Op, op_set
-from source_file import SourceFile, Span
+from source_file import SourceFile
+from span import Span
 from args import Args
 import optimize
 from errors import ParseError
