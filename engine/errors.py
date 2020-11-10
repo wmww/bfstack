@@ -1,4 +1,4 @@
-from source_file import Span
+from span import Span
 
 class ParseError(RuntimeError):
     '''For when the program has syntax errors'''

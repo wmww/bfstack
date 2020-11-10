@@ -1,10 +1,7 @@
 #!/usr/bin/python3
 
 from args import Args
-from source_file import SourceFile, Span
-from program import Program
-from tape import Tape
-import parse
+from span import Span
 from io_interface import Io
 from run import run
 from errors import ProgramError, ParseError, TestError

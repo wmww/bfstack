@@ -2,7 +2,7 @@ from instruction import Instruction
 from op import Op
 from program import Program
 from tape import TooFarLeftError
-from source_file import Span
+from span import Span
 
 from typing import List, cast
 from collections import defaultdict

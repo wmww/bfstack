@@ -1,4 +1,4 @@
-from source_file import Span
+from span import Span
 from instruction import Instruction
 from program import Program
 
