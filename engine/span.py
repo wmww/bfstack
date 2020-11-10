@@ -1,12 +1,14 @@
 from source_file import SourceFile
 
+from typing import Optional
+
 class Span:
     def __init__(self, source: SourceFile, start_char: int, end_char: int):
         self._source = source
         self._start_char = start_char
         self._end_char = end_char
-        self._cached_line = None
-        self._cached_col = None
+        self._cached_line: Optional[int] = None
+        self._cached_col: Optional[int] = None
 
     def line(self) -> int:
         if self._cached_line is None:
