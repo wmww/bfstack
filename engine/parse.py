@@ -1,5 +1,5 @@
 from instruction import Instruction
-from assertion import TapeAssertion, EmptyTapeAssertion, TestInput, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
+from assertion import TapeAssertion, EmptyTapeAssertion, StartTapeAssertion, TestInput, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
 from op import Op, op_set
 from source_file import SourceFile
 from span import Span
@@ -109,7 +109,8 @@ def _test_input(span: Span) -> TestInput:
     return TestInput(matchers, span)
 
 def _line(span: Span, args: Args) -> List[Instruction]:
-    text = span.text().strip()
+    span = span.strip()
+    text = span.text()
     if not text:
         return []
     code = _code(span)
@@ -131,7 +132,7 @@ def source(source_file: SourceFile, args: Args) -> List[Instruction]:
     span = source_file.span()
     if args.assertions:
         # An assertion at the start makes the property tests happy
-        code.append(EmptyTapeAssertion(Span(source_file, 0, 0)))
+        code.append(StartTapeAssertion(Span(source_file, 0, 0)))
     for sub in _split_on(span, set(['\n'])):
         try:
             code += _line(sub, args)

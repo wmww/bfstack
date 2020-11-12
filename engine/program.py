@@ -31,8 +31,7 @@ class Program:
         try:
             instruction.run(self)
         except ProgramError as e:
-            if e.span() is None:
-                e.set_span(instruction.span())
+            e.set_context(instruction.span(), self.tape)
             raise
         return True
 
