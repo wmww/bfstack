@@ -5,7 +5,7 @@ from source_file import SourceFile
 from span import Span
 from args import Args
 import optimize
-from errors import ParseError
+from errors import ParseError, MultiParseError, SingleParseError
 
 import re
 from typing import List, Set
@@ -38,11 +38,11 @@ def _character_literal(span: Span) -> int:
     text = span.text()
     if text.startswith('\\'):
         if len(text) != 2 or text[1] not in escapes:
-            raise ParseError('Invalid escape sequence: "' + text + '"', span)
+            raise SingleParseError('Invalid escape sequence: "' + text + '"', span)
         return ord(escapes[text[1]])
     else:
         if len(text) > 1:
-            raise ParseError('Invalid character literal: "' + text + '"', span)
+            raise SingleParseError('Invalid character literal: "' + text + '"', span)
         return ord(text)
 
 def _matcher(span: Span) -> Matcher:
@@ -59,7 +59,7 @@ def _matcher(span: Span) -> Matcher:
     ident_matches = re.findall('^[a-zA-Z_][a-zA-Z_0-9]*$', text)
     if ident_matches:
         return VariableMatcher(text)
-    raise ParseError('Invalid assertion cell: "' + text + '"', span)
+    raise SingleParseError('Invalid assertion cell: "' + text + '"', span)
 
 def _split_on(span: Span, split: Set[str]) -> List[Span]:
     start = 0
@@ -78,13 +78,13 @@ def _tape_assertion(span: Span) -> TapeAssertion:
     for cell_span in cell_spans[1:]:
         if cell_span.text().startswith('`'):
             if offset_of_current is not None:
-                raise ParseError('Assertion has multiple current cells', span)
+                raise SingleParseError('Assertion has multiple current cells', span)
             offset_of_current = len(cells)
             cell_span = cell_span[1:]
         cell = _matcher(cell_span)
         cells.append(cell)
     if offset_of_current is None:
-        raise ParseError('Assertion has no current cell', span)
+        raise SingleParseError('Assertion has no current cell', span)
     return TapeAssertion(cells, offset_of_current, span)
 
 def _test_input(span: Span) -> TestInput:
@@ -101,7 +101,7 @@ def _line(span: Span, args: Args) -> List[Instruction]:
     code = _code(span)
     if args.assertions and text[0] in ('=', '$'):
         if code:
-            raise ParseError('Brainfuck code in assertion line', span)
+            raise SingleParseError('Brainfuck code in assertion line', span)
         if text[0] == '=':
             return [_tape_assertion(span)]
         elif text[0] == '$':
@@ -131,16 +131,13 @@ def source(source_file: SourceFile, args: Args) -> List[Instruction]:
             if len(loops):
                 loops.pop(-1)
             else:
-                errors.append(ParseError('Unmatched "]"', instr.span()))
+                errors.append(SingleParseError('Unmatched "]"', instr.span()))
         elif instr.loop_level_change() != 0:
             assert False, 'Invalid value ' + str(instr.loop_level_change()) + ' for loop level change'
     for instr in loops:
-        errors.append(ParseError('Unmatched "["', instr.span()))
+        errors.append(SingleParseError('Unmatched "["', instr.span()))
     if errors:
-        message = str(len(errors)) + ' error' + ('s' if len(errors) != 1 else '') + ':'
-        for error in errors:
-            message += '\n\n' + str(error)
-        raise ParseError(message, errors[0].span())
+        raise MultiParseError(errors)
     if args.optimize:
         optimize.optimize(code)
     return code

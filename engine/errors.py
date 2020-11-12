@@ -1,15 +1,25 @@
 from span import Span
 
-from typing import List
+from typing import Sequence
+
+def _format_error_list(errors: Sequence[Exception]):
+    assert errors, 'Empty error list'
+    result = str(len(errors)) + ' error' + ('s' if len(errors) != 1 else '') + ':'
+    for e in errors:
+        result += '\n\n' + str(e)
+    return result
 
 class ParseError(RuntimeError):
     '''For when the program has syntax errors'''
+    pass
+
+class SingleParseError(ParseError):
     def __init__(self, msg: str, span: Span):
         super().__init__(span.error_str() + msg)
-        self._span = span
 
-    def span(self):
-        return self._span
+class MultiParseError(ParseError):
+    def __init__(self, errors: Sequence[ParseError]):
+        super().__init__(_format_error_list(errors))
 
 class ProgramError(RuntimeError):
     '''For when the program fails at runtime'''
@@ -35,10 +45,5 @@ class TooFarLeftError(ProgramError):
 
 class MultiProgramError(ProgramError):
     '''Bundles multiple errors together'''
-    def __init__(self, errors: List[ProgramError]):
-        assert errors, 'Empty error list'
-        self.errors = errors
-        result = str(len(errors)) + ' error(s):'
-        for e in errors:
-            result += '\n\n' + str(e)
-        super().__init__(result)
+    def __init__(self, errors: Sequence[ProgramError]):
+        super().__init__(_format_error_list(errors))
