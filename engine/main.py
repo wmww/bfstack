@@ -46,7 +46,7 @@ def main():
     try:
         io = UserIo()
         run(args, io)
-        failed = True
+        success = True
     except FileNotFoundError as e:
         logger.error(e)
     except ParseError as e:
