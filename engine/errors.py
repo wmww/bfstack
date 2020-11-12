@@ -38,11 +38,6 @@ class TestError(ProgramError):
     '''For when an assertion or test fails'''
     pass
 
-class TooFarLeftError(ProgramError):
-    '''For when the pointer moves to the left of the start'''
-    def __init__(self):
-        super().__init__('Too far left')
-
 class MultiProgramError(ProgramError):
     '''Bundles multiple errors together'''
     def __init__(self, errors: Sequence[ProgramError]):

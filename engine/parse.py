@@ -1,5 +1,5 @@
 from instruction import Instruction
-from assertion import TapeAssertion, TestInput, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
+from assertion import TapeAssertion, EmptyTapeAssertion, TestInput, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
 from op import Op, op_set
 from source_file import SourceFile
 from span import Span
@@ -72,20 +72,34 @@ def _split_on(span: Span, split: Set[str]) -> List[Span]:
     return result
 
 def _tape_assertion(span: Span) -> TapeAssertion:
-    cell_spans = _split_on(span, whitespace)
+    cell_spans = _split_on(span, whitespace)[1:]
     cells: List[Matcher] = []
     offset_of_current = None
-    for cell_span in cell_spans[1:]:
-        if cell_span.text().startswith('`'):
-            if offset_of_current is not None:
-                raise SingleParseError('Assertion has multiple current cells', span)
-            offset_of_current = len(cells)
-            cell_span = cell_span[1:]
-        cell = _matcher(cell_span)
-        cells.append(cell)
-    if offset_of_current is None:
+    slide_left = False
+    slide_right = False
+    for i, cell_span in enumerate(cell_spans):
+        text = cell_span.text()
+        if text == '~':
+            if i == 0:
+                slide_left = True
+            elif i == len(cell_spans) - 1:
+                slide_right = True
+            else:
+                raise SingleParseError('"~" not allowed anywhere but the start and end', cell_span)
+        else:
+            if text.startswith('`'):
+                if offset_of_current is not None:
+                    raise SingleParseError('Assertion has multiple current cells', span)
+                offset_of_current = len(cells)
+                cell_span = cell_span[1:]
+            cell = _matcher(cell_span)
+            cells.append(cell)
+    if slide_left and len(cell_spans) == 1:
+        return EmptyTapeAssertion(span)
+    elif offset_of_current is None:
         raise SingleParseError('Assertion has no current cell', span)
-    return TapeAssertion(cells, offset_of_current, span)
+    else:
+        return TapeAssertion(cells, slide_left, slide_right, offset_of_current, span)
 
 def _test_input(span: Span) -> TestInput:
     matcher_spans = _split_on(span, whitespace)
@@ -117,7 +131,7 @@ def source(source_file: SourceFile, args: Args) -> List[Instruction]:
     span = source_file.span()
     if args.assertions:
         # An assertion at the start makes the property tests happy
-        code.append(TapeAssertion([LiteralMatcher('0', 0)], 0, Span(source_file, 0, 0)))
+        code.append(EmptyTapeAssertion(Span(source_file, 0, 0)))
     for sub in _split_on(span, set(['\n'])):
         try:
             code += _line(sub, args)

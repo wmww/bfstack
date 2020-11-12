@@ -125,8 +125,15 @@ class InverseMatcher(Matcher):
         raise TestError('Literally nothing matches ' + str(self))
 
 class TapeAssertion(Instruction):
-    def __init__(self, cells: Sequence[Matcher], offset_of_current: int, span: Span):
+    def __init__(
+            self, cells: Sequence[Matcher],
+            allow_slide_left: bool,
+            allow_slide_right: bool,
+            offset_of_current: int,
+            span: Span):
         self._cells = cells
+        self._allow_slide_left = allow_slide_left
+        self._allow_slide_right = allow_slide_right
         self._offset_of_current = offset_of_current
         self._span = span
         self._used_variables: Set[str] = set()
@@ -137,27 +144,37 @@ class TapeAssertion(Instruction):
 
     def __str__(self):
         result = '= '
+        if self._allow_slide_left:
+            result += '~ '
         for i, cell in enumerate(self._cells):
             if i:
                 result += ' '
             if i == self._offset_of_current:
                 result += '`'
             result += str(cell)
+        if self._allow_slide_right:
+            result += ' ~'
         return result
+
+    def apply_bounds_to_tape(self, tape: Tape):
+        left = None if self._allow_slide_left else -self._offset_of_current
+        right = None if self._allow_slide_right else len(self._cells) - self._offset_of_current - 1
+        tape.set_assertion_bounds(left, right)
 
     def run(self, program: Program):
         program.real_ops += 1
         if program.tape.get_position() < self._offset_of_current:
-            raise AssertionFailedError(self, None, 'too far left', program.assertion_ctx)
+            raise AssertionFailedError(self, None, 'data pointer is too far left', program.assertion_ctx)
         actual = [program.tape.get_value(i - self._offset_of_current) for i in range(len(self._cells))]
         for i, cell in enumerate(self._cells):
             cell.bind(program.assertion_ctx, actual[i])
         for i, cell in enumerate(self._cells):
             program.real_ops += 1
             if not cell.matches(program.assertion_ctx, actual[i]):
-                actual_tape = Tape(self._offset_of_current, actual)
+                actual_tape = Tape(self._offset_of_current, actual, False)
                 raise AssertionFailedError(self, actual_tape, None, program.assertion_ctx)
         program.assertion_ctx.remove_unused_vars(self._used_variables)
+        self.apply_bounds_to_tape(program.tape)
 
     def loop_level_change(self) -> int:
         return 0
@@ -172,7 +189,23 @@ class TapeAssertion(Instruction):
         data: List[int] = []
         for cell in self._cells:
             data.append(cell.random_matching(ctx))
-        return Tape(self._offset_of_current, data)
+        tape = Tape(self._offset_of_current, data, False)
+        self.apply_bounds_to_tape(tape)
+        return tape
+
+class EmptyTapeAssertion(TapeAssertion):
+    def __init__(self, span: Span):
+        self._span = span
+
+    def __str__(self):
+        return '= ~'
+
+    def run(self, program: Program):
+        program.assertion_ctx.remove_unused_vars(set())
+        program.tape.set_assertion_bounds(None, None)
+
+    def random_matching_tape(self, ctx: AssertionCtx) -> Tape:
+        return Tape(0, [], False)
 
 class TestInput(Instruction):
     def __init__(self, matchers: Sequence[Matcher], span: Span):
