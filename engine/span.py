@@ -1,5 +1,6 @@
 from source_file import SourceFile
 
+import os
 from typing import Optional
 
 class Span:
@@ -21,7 +22,7 @@ class Span:
     def col(self) -> int:
         if self._cached_col is None:
             self._cached_col = 1
-            for c in self._source.contents()[:self._start_char:-1]:
+            for c in reversed(self._source.contents()[:self._start_char]):
                 if c == '\n':
                     break
                 self._cached_col += 1
@@ -55,10 +56,12 @@ class Span:
             return self.sub_span(start, stop)
 
     def __str__(self):
-        return self._source.path() + ':' + str(self.line()) + ':' + str(self.col())
+        return (
+            os.path.relpath(self._source.path()) + ':' + str(self.line()) + ' ' +
+            str(self.col()) + '..' + str(self.col() + self.length() - 1))
 
     def error_str(self) -> str:
-        result = self._source.path() + ':' + str(self.line()) + ':\n'
+        result = os.path.relpath(self._source.path()) + ':' + str(self.line()) + ':\n'
         result += self._source.line_text(self.line()) + '\n'
         result += ' ' * (self.col() - 1) + '^' * self.length() + '\n'
         return result
