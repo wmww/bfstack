@@ -14,7 +14,7 @@ from typing import cast
 
 logger = logging.getLogger(__name__)
 
-def run_test_iteration(program: Program, start_code_index: int, assertion: TapeAssertion, seed: str):
+def property_test_iteration(program: Program, start_code_index: int, assertion: TapeAssertion, seed: str):
     ctx = AssertionCtx(seed)
     try:
         program.tape = assertion.random_matching_tape(ctx)
@@ -29,7 +29,7 @@ def run_test_iteration(program: Program, start_code_index: int, assertion: TapeA
             isinstance(program.code[program.current], TapeAssertion)):
             break
 
-def run_tests(args: Args, program: Program):
+def run_property_tests(args: Args, program: Program):
     logger.info('Testing program')
     errors = []
     for index, instr in enumerate(program.code):
@@ -38,7 +38,7 @@ def run_tests(args: Args, program: Program):
             try:
                 for i in range(args.test_iterations):
                     seed = str(index) + ',' + str(i)
-                    run_test_iteration(program, index, cast(TapeAssertion, instr), seed)
+                    property_test_iteration(program, index, cast(TapeAssertion, instr), seed)
             except OffEdgeOfTestTapeError as e:
                 pass # this is expected, the test is now over
             except ProgramError as e:
@@ -65,8 +65,8 @@ def run(args: Args, io: Io) -> Program:
         program = Program(tape, code, io)
         program_start_time = time.time()
         logger.info('Took ' + str(round(program_start_time - load_start_time, 2)) + 's to load program')
-        if args.run_tests:
-            run_tests(args, program)
+        if args.prop_tests:
+            run_property_tests(args, program)
         else:
             run_normally(program)
     finally:
@@ -79,5 +79,6 @@ def run(args: Args, io: Io) -> Program:
                 ' (plus ' + str(round(input_time, 2)) + 's waiting for input)')
             logger.info('Ran ' + str(program.emulated_ops) + ' virtual brainfuck operations')
             logger.info('Ran ' + str(program.real_ops) + ' real constant time operations')
-            logger.info('Tape: ' + str(tape))
+            if not args.prop_tests:
+                logger.info('Tape: ' + str(tape))
     return program
