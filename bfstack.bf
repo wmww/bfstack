@@ -29,7 +29,7 @@ copy namespace without loosing original
 <<<[->>>+>+<<<<]>>>>[-<<<<+>>>>]<
 
 = N S L1 `N 0
-= `*
+= ~
 
 std(1)
 NAMESPACE{ open{ [[->+<]+>-[[->+<]<->]<[- }; copy_S{ <<[->>+>+<<<]>>>[-<<<+>>>]< } }
