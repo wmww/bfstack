@@ -1,7 +1,7 @@
 +++>++++++>+
-= A f_oo `bar0
+= A f_oo `bar0 0
 <[>>+<<-]
 <[>+<-]
-= `0 A bar0 f_oo
+= `0 A bar0 f_oo 0 0
 >>>[>+>+<<-]
 = bar0 `0 foo f_oo
