@@ -59,7 +59,7 @@ def run(args: Args, io: Io) -> Program:
         load_start_time = time.time()
         source_file = SourceFile(args)
         code = parse.source(source_file, args)
-        tape = Tape(0, [])
+        tape = Tape(0, [], True)
         program = Program(tape, code, io)
         program_start_time = time.time()
         logger.info('Took ' + str(round(program_start_time - load_start_time, 2)) + 's to load program')
