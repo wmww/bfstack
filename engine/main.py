@@ -42,14 +42,18 @@ def main():
     args.parse(sys.argv[1:]) # strip off the first argument (program name)
     if args.show_info:
         logging.basicConfig(level=logging.INFO)
+    success = False
     try:
         io = UserIo()
         run(args, io)
+        failed = True
+    except FileNotFoundError as e:
+        logger.error(e)
     except ParseError as e:
         logger.error('Syntax error: ' + str(e))
-        exit(1)
     except ProgramError as e:
         logger.error('Program failed: ' + str(e))
+    if not success:
         exit(1)
 
 if __name__ == '__main__':

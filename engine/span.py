@@ -67,5 +67,18 @@ class Span:
         return result
 
     def extend_to(self, other):
-        self._start_char = min(self._start_char, other._start_char)
-        self._end_char = max(self._end_char, other._end_char)
+        start = min(self._start_char, other._start_char)
+        end = max(self._end_char, other._end_char)
+        return Span(self._source, start, end)
+
+    def strip(self):
+        text = self.text()
+        start = self._start_char
+        end = self._end_char
+        while len(text) and text[-1].isspace():
+            text = text[:-1]
+            end -= 1
+        while len(text) and text[0].isspace():
+            text = text[1:]
+            start += 1
+        return Span(self._source, start, end)

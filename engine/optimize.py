@@ -15,7 +15,7 @@ class Block(Instruction):
         self._required_right_room = 0
         self._emulated_ops = 0
         self._is_unrolled_loop = False
-        self._span = None
+        self._span: Optional[Span] = None
 
     def __str__(self):
         return self._code + ' @ ' + str(self._span)
@@ -52,10 +52,9 @@ class Block(Instruction):
             self._values.pop(self._offset)
 
         self._emulated_ops += 1
-        if not self._span:
+        if self._span is None:
             self._span = op.span()
-        else:
-            self._span.extend_to(op.span())
+        self._span = self._span.extend_to(op.span())
 
         return True
 

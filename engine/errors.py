@@ -23,10 +23,17 @@ class MultiParseError(ParseError):
 
 class ProgramError(RuntimeError):
     '''For when the program fails at runtime'''
-    def set_span(self, span: Span):
-        self._span = span
+    def set_context(self, span: Span, tape):
+        if self.span() is None:
+            self._span = span
+        result = ''
         assert self.args, str(self) + ' has no args'
-        self.args = (span.error_str() + self.args[0],) + self.args[1:]
+        if self._span:
+            result += self._span.error_str()
+        if tape:
+            result += 'Tape: ' + str(tape) + '\n'
+        if result:
+            self.args = (result + self.args[0],) + self.args[1:]
 
     def span(self):
         if hasattr(self, '_span'):
@@ -36,6 +43,10 @@ class ProgramError(RuntimeError):
 
 class TestError(ProgramError):
     '''For when an assertion or test fails'''
+    pass
+
+class OffEdgeOfTestTapeError(ProgramError):
+    '''Spacial error when using a test tape that indicates the program has left the known range'''
     pass
 
 class MultiProgramError(ProgramError):

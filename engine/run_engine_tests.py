@@ -80,14 +80,28 @@ def construct_test_class(cls) -> List:
     return cls
 
 @construct_test_class
-class UnitTests(TestCase):
+class OptimizedUnitTests(TestCase):
     def init_args(self, args: Args):
-        args.run_tests = True
+        args.run_tests = False
+        args.optimize = True
 
 @construct_test_class
-class PropertyTests(TestCase):
+class OptimizedPropertyTests(TestCase):
     def init_args(self, args: Args):
-        pass
+        args.run_tests = True
+        args.optimize = True
+
+@construct_test_class
+class UnoptimizedUnitTests(TestCase):
+    def init_args(self, args: Args):
+        args.run_tests = False
+        args.optimize = False
+
+@construct_test_class
+class UnoptimizedPropertyTests(TestCase):
+    def init_args(self, args: Args):
+        args.run_tests = True
+        args.optimize = False
 
 if __name__ == '__main__':
     unittest.main()

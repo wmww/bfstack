@@ -5,7 +5,7 @@ from tape import Tape
 import parse
 from io_interface import Io
 from assertion import TapeAssertion
-from errors import ProgramError, MultiProgramError
+from errors import ProgramError, MultiProgramError, OffEdgeOfTestTapeError
 from assertion_ctx import AssertionCtx
 
 import time
@@ -19,7 +19,7 @@ def run_test_iteration(program: Program, start_code_index: int, assertion: TapeA
     try:
         program.tape = assertion.random_matching_tape(ctx)
     except ProgramError as e:
-        e.set_span(assertion.span())
+        e.set_context(assertion.span(), None)
         raise
     program.current = start_code_index - 1
     program.io.reset()
@@ -35,12 +35,14 @@ def run_tests(args: Args, program: Program):
     for index, instr in enumerate(program.code):
         if isinstance(instr, TapeAssertion):
             logger.info('Testing ' + str(args.test_iterations) + ' scenarios starting at ' + str(instr.span()))
-            for i in range(args.test_iterations):
-                try:
+            try:
+                for i in range(args.test_iterations):
                     seed = str(index) + ',' + str(i)
                     run_test_iteration(program, index, cast(TapeAssertion, instr), seed)
-                except ProgramError as e:
-                    errors.append(e)
+            except OffEdgeOfTestTapeError as e:
+                pass # this is expected, the test is now over
+            except ProgramError as e:
+                errors.append(e)
     if errors:
         logger.info('Tests failed')
         raise MultiProgramError(errors)
@@ -59,7 +61,7 @@ def run(args: Args, io: Io) -> Program:
         load_start_time = time.time()
         source_file = SourceFile(args)
         code = parse.source(source_file, args)
-        tape = Tape(0, [], True)
+        tape = Tape(0, [], True, False)
         program = Program(tape, code, io)
         program_start_time = time.time()
         logger.info('Took ' + str(round(program_start_time - load_start_time, 2)) + 's to load program')
