@@ -22,6 +22,8 @@ To aid with development and testing, BFStack uses a custom assertion syntax defi
 ### Syntax
 Assertions start with a `=`. Whitespace (ASCII 9 and ASCII 32) may come before the `=`. They are composed of a sequence of whitespace-separated value matchers. Exactly one of the value matchers must be proceeded by a backtick (`\``). This marks the current cell. If all matchers match their corresponding data tape cells, the assertion passes. Otherwise, the assertion fails.
 
+The data pointer must stay within the range of the assertion until the next assertion unless it has a `~` at the start and/or end. The `~` is like a matcher in that it is whitespace separated from the `=` and other matchers, but it can't be combined, be the current cell or be anywhere but the start and end. It indicates the data pointer may leave the assertion reange in that direction, at which point no other checks are made until the next assertion. A special assertion containing only `= ~` and no current cell clears the current assertion.
+
 ### Test input
 Lines queueing test input have the same syntax as assertions, except that they start with a `$` and don't have a current cell marker. Test input has no effect if the program is being run interactivly (real user input is __not__ checked against it). If not being run interactivly, matching values are generated and queued up. Random values are chosen if the matcher can match more than one value. All input must be consumed before the end of the program or the next test input line.
 
