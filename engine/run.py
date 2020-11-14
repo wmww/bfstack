@@ -32,17 +32,19 @@ def property_test_iteration(program: Program, start_code_index: int, assertion: 
 def run_property_tests(args: Args, program: Program):
     logger.info('Testing program')
     errors = []
+    assertion_count = 0
     for index, instr in enumerate(program.code):
         if isinstance(instr, TapeAssertion):
             logger.info('Testing ' + str(args.test_iterations) + ' scenarios starting at ' + str(instr.span()))
             try:
                 for i in range(args.test_iterations):
-                    seed = str(index) + ',' + str(i)
+                    seed = str(assertion_count) + ',' + str(i)
                     property_test_iteration(program, index, cast(TapeAssertion, instr), seed)
             except OffEdgeOfTestTapeError as e:
                 pass # this is expected, the test is now over
             except ProgramError as e:
                 errors.append(e)
+            assertion_count += 1
     if errors:
         logger.info('Tests failed')
         raise MultiProgramError(errors)
