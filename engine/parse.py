@@ -41,7 +41,7 @@ def _character_literal(span: Span) -> int:
             raise SingleParseError('Invalid escape sequence: "' + text + '"', span)
         return ord(escapes[text[1]])
     else:
-        if len(text) > 1:
+        if len(text) > 1 or ord(text) >= 256:
             raise SingleParseError('Invalid character literal: "' + text + '"', span)
         return ord(text)
 
@@ -55,6 +55,9 @@ def _matcher(span: Span) -> Matcher:
         return LiteralMatcher(text, _character_literal(span[1:]))
     number_matches = re.findall('^[0-9]+$', text)
     if number_matches:
+        value = int(text)
+        if value < 0 or value >= 256:
+            raise SingleParseError('Invalid cell value ' + str(value) + ', must be in range 0-255', span)
         return LiteralMatcher(text, int(text))
     ident_matches = re.findall('^[a-zA-Z_][a-zA-Z_0-9]*$', text)
     if ident_matches:

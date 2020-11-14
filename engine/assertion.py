@@ -61,6 +61,7 @@ class VariableMatcher(Matcher):
 
 class LiteralMatcher(Matcher):
     def __init__(self, text: str, value: int):
+        assert value >= 0 and value < 256, 'Invalid literal matcher'
         self._text = text
         self._value = value
 
