@@ -24,7 +24,7 @@ class Tape:
             left_edge = min(left_edge, self._left_bound)
         left_edge = max(left_edge, self._position - MAX_PRINT_LEN)
 
-        right_edge = self._right_frontier + 1
+        right_edge = max(self._right_frontier + 1, len(self._data) - self._offset_to_data)
         if self._right_bound:
             right_edge = max(right_edge, self._right_bound + 1)
         right_edge = min(right_edge, self._position + MAX_PRINT_LEN)
