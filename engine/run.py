@@ -30,10 +30,9 @@ def property_test_iteration(program: Program, start_code_index: int, assertion: 
     program.current = start_code_index - 1
     program.io.reset()
     program.assertion_ctx = ctx
+    program.iteration()
     while program.iteration():
-        has_moved = program.current != start_code_index
-        ends_block = program.code[program.current].ends_assertion_block()
-        if (has_moved and ends_block):
+        if (program.code[program.current].ends_assertion_block()):
             break
 
 def run_property_tests(args: Args, program: Program):
