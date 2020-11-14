@@ -13,7 +13,7 @@ from typing import List
 logger = logging.getLogger(__name__)
 
 class UserIo(Io):
-    def __init__(self):
+    def __init__(self) -> None:
         self.input_time: float = 0.0
         self.input_buffer: List[str] = []
 
@@ -37,7 +37,7 @@ class UserIo(Io):
     def reset(self):
         pass
 
-def main():
+def main() -> None:
     args = Args()
     args.parse(sys.argv[1:]) # strip off the first argument (program name)
     if args.show_info:

@@ -64,7 +64,10 @@ class Span:
         '''Format in a way suitable for error messages, ends with a newline'''
         result = os.path.relpath(self._source.path()) + ':' + str(self.line()) + ':\n'
         result += self._source.line_text(self.line()) + '\n'
-        result += ' ' * (self.col() - 1) + '^' * self.length() + '\n'
+        if self.length() > 0:
+            result += ' ' * (self.col() - 1) + '^' * self.length() + '\n'
+        else:
+            result += ' ' * (self.col() - 1) + '\_[zero-length span]' + '\n'
         return result
 
     def extend_to(self, other: 'Span') -> 'Span':

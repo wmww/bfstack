@@ -11,6 +11,7 @@ class Args:
         self.optimize = True
         self.prop_tests = False
         self.test_iterations = default_test_iters
+        self.expect_fail = False
 
     def parse(self, argv: List[str]):
         parser = argparse.ArgumentParser(description='Run and/or test a brainfuck program')
