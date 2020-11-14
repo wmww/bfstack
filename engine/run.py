@@ -5,66 +5,81 @@ from tape import Tape
 import parse
 from io_interface import Io
 from assertion import TapeAssertion
-from errors import ProgramError, MultiProgramError, OffEdgeOfTestTapeError
+from errors import ProgramError, ParseError, MultiProgramError, OffEdgeOfTestTapeError, UnexpectedSuccessError, MultiUnexpectedSuccessError
 from assertion_ctx import AssertionCtx
 
 import time
 import logging
-from typing import cast
+from typing import cast, Callable, List
 
 logger = logging.getLogger(__name__)
 
-def property_test_iteration(program: Program, start_code_index: int, assertion: TapeAssertion, seed: str):
+def property_test_iteration(program: Program, start_code_index: int, seed: str):
+    assertion = cast(TapeAssertion, program.code[start_code_index])
+    assert isinstance(assertion, TapeAssertion)
     ctx = AssertionCtx(seed)
-    try:
-        program.tape = assertion.random_matching_tape(ctx)
-    except OffEdgeOfTestTapeError as e:
-        # This will be ignored by calling function if we don't handle it
-        if not e.span:
-            e.span = assertion.span()
-        assert False, str(e) + '\nOffEdgeOfTestTapeError raised in test tape setup.'
-    except ProgramError as e:
-        if not e.span:
-            e.span = assertion.span()
-        raise
+    program.tape = assertion.random_matching_tape(ctx)
     program.current = start_code_index - 1
     program.io.reset()
     program.assertion_ctx = ctx
-    program.iteration()
-    while program.iteration():
-        if (program.code[program.current].ends_assertion_block()):
-            break
+    try:
+        program.iteration()
+        while program.iteration():
+            if (program.code[program.current].ends_assertion_block()):
+                break
+    except OffEdgeOfTestTapeError:
+        pass # this is expected, the test is now over
 
 def run_property_tests(args: Args, program: Program):
     logger.info('Testing program')
-    errors = []
+    errors: List[Exception] = []
     assertion_count = 0
+    some_assertions_always_fails = False
     for index, instr in enumerate(program.code):
         if isinstance(instr, TapeAssertion):
             logger.info('Testing ' + str(args.test_iterations) + ' scenarios starting at ' + str(instr.span()))
-            try:
-                for i in range(args.test_iterations):
-                    try:
-                        seed = str(assertion_count) + ',' + str(i)
-                        property_test_iteration(program, index, cast(TapeAssertion, instr), seed)
-                    except OffEdgeOfTestTapeError as e:
-                        pass # this is expected, the test is now over
-            except ProgramError as e:
-                errors.append(e)
+            an_iteration_succeeded = False
+            for i in range(args.test_iterations):
+                try:
+                    seed = str(assertion_count) + ',' + str(i)
+                    property_test_iteration(program, index, seed)
+                    program.io.reset()
+                    an_iteration_succeeded = True
+                    if args.expect_fail:
+                        assertion = cast(TapeAssertion, program.code[index])
+                        start_tape = assertion.random_matching_tape(AssertionCtx(seed))
+                        msg = ''
+                        msg += 'Start tape: ' + str(start_tape) + '\n'
+                        msg += 'Final tape: ' + str(program.tape) + '\n'
+                        msg += 'No error raised'
+                        e = UnexpectedSuccessError(msg)
+                        e.span = assertion.span()
+                        errors.append(e)
+                        break
+                except ProgramError as e:
+                    if not args.expect_fail:
+                        errors.append(e)
+                        break
+            if not an_iteration_succeeded:
+                some_assertions_always_fails = True
             assertion_count += 1
-    if errors:
-        logger.info('Tests failed')
+    if args.expect_fail:
+        if some_assertions_always_fails:
+            raise ProgramError('This expected error should be caught')
+        elif errors:
+            raise MultiUnexpectedSuccessError(errors)
+        else:
+            raise UnexpectedSuccessError('Property tests succeeded unexpectedly')
+    elif errors:
         raise MultiProgramError(errors)
-    else:
-        logger.info('Tests complete')
 
-def run_normally(program):
+def run_normally(program: Program):
     logger.info('Program output:')
     while program.iteration():
         pass
     logger.info('Program done')
 
-def run(args: Args, io: Io) -> Program:
+def run(args: Args, io: Io) -> None:
     program = None
     try:
         load_start_time = time.time()
@@ -75,9 +90,15 @@ def run(args: Args, io: Io) -> Program:
         program_start_time = time.time()
         logger.info('Took ' + str(round(program_start_time - load_start_time, 2)) + 's to load program')
         if args.prop_tests:
-            run_property_tests(args, program)
+            run_property_tests(args, cast(Program, program))
         else:
-            run_normally(program)
+            run_normally(cast(Program, program))
+        io.reset()
+    except (ProgramError, ParseError) as e:
+        if args.expect_fail:
+            return
+        else:
+            raise
     finally:
         if program:
             program_end_time = time.time()
@@ -90,4 +111,8 @@ def run(args: Args, io: Io) -> Program:
             logger.info('Ran ' + str(program.real_ops) + ' real constant time operations')
             if not args.prop_tests:
                 logger.info('Tape: ' + str(tape))
-    return program
+    if args.expect_fail:
+        error = UnexpectedSuccessError('Succeeded unexpectedly')
+        if program:
+            error.tape = program.tape
+        raise error

@@ -4,12 +4,16 @@ if TYPE_CHECKING:
     from span import Span
     from tape import Tape
 
-def _format_error_list(errors: Sequence[Exception]):
-    assert errors, 'Empty error list'
-    result = str(len(errors)) + ' error' + ('s' if len(errors) != 1 else '') + ':'
-    for e in errors:
-        result += '\n\n' + str(e)
-    return result
+class MultiError:
+    def __init__(self, errors: Sequence[Exception]):
+        assert errors, 'Empty error list'
+        self.errors = errors
+
+    def __str__(self) -> str:
+        result = str(len(self.errors)) + ' error' + ('s' if len(self.errors) != 1 else '') + ':'
+        for e in self.errors:
+            result += '\n' + str(e) + '\n'
+        return result
 
 class ParseError(Exception):
     '''For when the program has syntax errors'''
@@ -19,12 +23,11 @@ class SingleParseError(ParseError):
     def __init__(self, msg: str, span: 'Span'):
         super().__init__(span.error_str() + msg)
 
-class MultiParseError(ParseError):
-    def __init__(self, errors: Sequence[ParseError]):
-        super().__init__(_format_error_list(errors))
+class MultiParseError(MultiError, ParseError):
+    pass
 
-class ProgramError(Exception):
-    '''For when the program fails at runtime'''
+class RunError(Exception):
+    '''An error with a span and tape'''
     def __init__(self, message: str):
         self.message = message
         self.tape: Optional[Tape] = None
@@ -39,6 +42,10 @@ class ProgramError(Exception):
         result += self.message
         return result
 
+class ProgramError(RunError):
+    '''For when the program fails'''
+    pass
+
 class TestError(ProgramError):
     '''For when an assertion or test fails'''
     pass
@@ -49,11 +56,11 @@ class OffEdgeOfTestTapeError(ProgramError):
         super().__init__('')
         self.tape = tape
 
-class MultiProgramError(ProgramError):
-    '''Bundles multiple errors together'''
-    def __init__(self, errors: Sequence[ProgramError]):
-        super().__init__('')
-        self.errors = errors
+class MultiProgramError(MultiError, ProgramError):
+    pass
 
-    def __str__(self) -> str:
-        return _format_error_list(self.errors)
+class UnexpectedSuccessError(RunError):
+    pass
+
+class MultiUnexpectedSuccessError(MultiError, UnexpectedSuccessError):
+    pass
