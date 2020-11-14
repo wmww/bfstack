@@ -96,7 +96,7 @@ class WildcardMatcher(Matcher):
         return None
 
     def random_matching(self, ctx: AssertionCtx) -> int:
-        return ctx.random_byte()
+        return ctx.random_biased_byte()
 
 class InverseMatcher(Matcher):
     def __init__(self, inner: Matcher):
@@ -115,8 +115,8 @@ class InverseMatcher(Matcher):
         return self._inner.used_variables()
 
     def random_matching(self, ctx: AssertionCtx) -> int:
-        for i in range(256):
-            v = ctx.random_byte()
+        for i in range(100):
+            v = ctx.random_biased_byte()
             if not self._inner.matches(ctx, v):
                 return v
         for i in range(256):
@@ -186,7 +186,7 @@ class TapeAssertion(Instruction):
     def random_matching_tape(self, ctx: AssertionCtx) -> Tape:
         for var in self._used_variables:
             if var not in ctx.bound_vars:
-                ctx.bound_vars[var] = ctx.random_byte()
+                ctx.bound_vars[var] = ctx.random_biased_byte()
         data: List[int] = []
         for cell in self._cells:
             data.append(cell.random_matching(ctx))

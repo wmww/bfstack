@@ -18,6 +18,9 @@ def property_test_iteration(program: Program, start_code_index: int, assertion: 
     ctx = AssertionCtx(seed)
     try:
         program.tape = assertion.random_matching_tape(ctx)
+    except OffEdgeOfTestTapeError as e:
+        # This will be ignored by calling function if we don't handle it
+        assert False, 'OffEdgeOfTestTapeError raised in test tape setup'
     except ProgramError as e:
         e.set_context(assertion.span(), None)
         raise
@@ -38,10 +41,11 @@ def run_property_tests(args: Args, program: Program):
             logger.info('Testing ' + str(args.test_iterations) + ' scenarios starting at ' + str(instr.span()))
             try:
                 for i in range(args.test_iterations):
-                    seed = str(assertion_count) + ',' + str(i)
-                    property_test_iteration(program, index, cast(TapeAssertion, instr), seed)
-            except OffEdgeOfTestTapeError as e:
-                pass # this is expected, the test is now over
+                    try:
+                        seed = str(assertion_count) + ',' + str(i)
+                        property_test_iteration(program, index, cast(TapeAssertion, instr), seed)
+                    except OffEdgeOfTestTapeError as e:
+                        pass # this is expected, the test is now over
             except ProgramError as e:
                 errors.append(e)
             assertion_count += 1

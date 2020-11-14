@@ -6,8 +6,17 @@ class AssertionCtx:
         self.rand = Random(seed)
         self.bound_vars: Dict[str, int] = {}
 
-    def random_byte(self):
-        return self.rand.randint(0, 255)
+    def random_biased_byte(self):
+        value = self.rand.randint(0, 256 * 3)
+        # Most commonly returns 0, then 1 or 255, then anything else
+        if value >= 256 * 2:
+            return 0
+        elif value > 256 * 1.5:
+            return 1
+        elif value >= 256:
+            return 255
+        else:
+            return value
 
     def remove_unused_vars(self, used_vars: Set[str]):
         to_remove = []

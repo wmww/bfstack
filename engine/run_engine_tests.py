@@ -97,13 +97,13 @@ class OptimizedPropertyTests(TestCase):
         args.optimize = True
 
 @construct_test_class
-class UnoptimizedUnitTests(TestCase):
+class UnoptimizedIntegrationTests(TestCase):
     def init_args(self, args: Args):
         args.prop_tests = False
         args.optimize = False
 
 @construct_test_class
-class UnoptimizedIntegrationTests(TestCase):
+class UnoptimizedPropertyTests(TestCase):
     def init_args(self, args: Args):
         args.prop_tests = True
         args.optimize = False
