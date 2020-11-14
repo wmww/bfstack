@@ -10,6 +10,8 @@ from typing import List, Tuple
 import os
 import unittest
 from unittest import TestCase, TestSuite, TestResult
+import subprocess
+from shutil import which
 
 class TestIo(Io):
     def __init__(self):
@@ -58,8 +60,11 @@ def run_test_code(self, source_path, expect_fail):
         if not expect_fail:
             self.fail('Test failed: ' + str(error))
 
+def engine_path() -> str:
+    return os.path.dirname(os.path.realpath(__file__))
+
 def scan_test_files() -> List[Tuple[str, str]]:
-    test_dir = os.path.dirname(os.path.realpath(__file__)) + '/tests/'
+    test_dir = os.path.join(engine_path(), 'tests/')
     result = []
     for name in os.listdir(test_dir):
         if name.endswith('.bf'):
@@ -102,6 +107,15 @@ class UnoptimizedIntegrationTests(TestCase):
     def init_args(self, args: Args):
         args.prop_tests = True
         args.optimize = False
+
+class EngineTypesTest(TestCase):
+    def test_engine_types(self):
+        mypy = which('mypy')
+        assert mypy is not None, 'Could not check types, mypy required'
+        engine = os.path.relpath(engine_path())
+        result = subprocess.run([mypy, engine], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        if result.returncode != 0:
+            raise RuntimeError('`$ mypy ' + engine + '` failed:\n' + result.stdout)
 
 if __name__ == '__main__':
     unittest.main()
