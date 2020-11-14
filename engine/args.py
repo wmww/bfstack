@@ -1,7 +1,7 @@
 import argparse
 from typing import List
 
-default_test_iters = 10
+default_test_iters = 24
 
 class Args:
     def __init__(self):

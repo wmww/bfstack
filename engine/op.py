@@ -54,5 +54,8 @@ class Op(Instruction):
         else:
             return 0
 
+    def ends_assertion_block(self) -> bool:
+        return False
+
     def span(self) -> Span:
         return self._span

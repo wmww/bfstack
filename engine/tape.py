@@ -16,7 +16,30 @@ class Tape:
         self._is_test_tape = is_test_tape # test tapes can not be dynamically expanded with 0s
         self.check_offset_allowed(0)
 
-    def __str__(self):
+    def range_to_str(self, start_offset: int, end_offset: int) -> str:
+        left_edge = self._position + start_offset
+        right_edge = self._position + end_offset
+        result = ''
+        for i in range(left_edge, right_edge):
+            if result:
+                result += ' '
+            if i == 0:
+                result += '| '
+            if i == self._left_bound:
+                result += '[ '
+            if i - 1 == self._right_bound:
+                result += '] '
+            if i == self._position:
+                result += '`'
+            try:
+                result += str(self._get_value_unchecked_absolute(i))
+            except OffEdgeOfTestTapeError:
+                result += '*'
+        if right_edge - 1 == self._right_bound:
+            result += ' ]'
+        return result
+
+    def __str__(self) -> str:
         result = ''
 
         left_edge = min(0, self._left_frontier)
@@ -31,31 +54,19 @@ class Tape:
 
         if left_edge > 0:
             result += '| (' + str(left_edge) + ' cells) …'
-        for i in range(left_edge, right_edge):
-            if i == 0:
-                if result:
-                    result += ' '
-                result += '|'
-            if i == self._left_bound:
-                result += ' [ '
-            elif i - 1 == self._right_bound:
-                result += ' ] '
-            else:
-                result += ' '
-            if i == self._position:
-                result += '`'
-            result += str(self._get_value_unchecked_absolute(i))
-        if right_edge - 1 == self._right_bound:
-            result += ' ]'
+
+        result += self.range_to_str(left_edge - self._position, right_edge - self._position)
+
         right_chop = len(self._data) - self._offset_to_data - right_edge
         if right_chop > 0:
             result += ' … (' + str(right_chop) + ' cells)'
+
         return result
 
     def get_position(self) -> int:
         return self._position
 
-    def check_offset_allowed(self, offset: int):
+    def check_offset_allowed(self, offset: int) -> None:
         pos = self._position + offset
         self._left_frontier = min(pos, self._left_frontier)
         self._right_frontier = max(pos, self._right_frontier)
@@ -68,9 +79,9 @@ class Tape:
         if self._is_test_tape:
             i = pos + self._offset_to_data
             if i < 0 or i >= len(self._data):
-                raise OffEdgeOfTestTapeError('')
+                raise OffEdgeOfTestTapeError(self)
 
-    def check_range_allowed(self, left_offset: int, right_offset: int):
+    def check_range_allowed(self, left_offset: int, right_offset: int) -> None:
         # If left and right are both allowed, the whole range must be
         self.check_offset_allowed(right_offset)
         self.check_offset_allowed(left_offset)
@@ -83,10 +94,12 @@ class Tape:
 
     def _get_value_unchecked_absolute(self, logical_position: int) -> int:
         i = logical_position + self._offset_to_data
-        if i >= len(self._data) or i < 0:
-            return 0
-        else:
+        if i >= 0 and i < len(self._data):
             return self._data[i]
+        elif self._is_test_tape:
+            raise OffEdgeOfTestTapeError(self)
+        else:
+            return 0
 
     def get_value(self, offset: int) -> int:
         self.check_offset_allowed(offset)
@@ -97,9 +110,13 @@ class Tape:
         value = value % 256
         i = offset + self._position + self._offset_to_data
         while i < 0:
+            if self._is_test_tape:
+                OffEdgeOfTestTapeError(self)
             self._offset_to_data += 100
             i = offset + self._position + self._offset_to_data
         while i >= len(self._data):
+            if self._is_test_tape:
+                OffEdgeOfTestTapeError(self)
             self._data.append(0)
         self._data[i] = value
 
