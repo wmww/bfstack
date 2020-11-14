@@ -1,6 +1,7 @@
 [
-Unclear where this code originally came from or what license it's under
-Found on https://esolangs.org/wiki/Brainfuck
+Shows cell size of current interpreter
+Source: https://esolangs.org/wiki/Brainfuck
+Available under CC0 1.0 Universal Public Domain Dedication
 ]
 
 Calculate the value 256 and test if it's zero
