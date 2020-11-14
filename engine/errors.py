@@ -1,6 +1,8 @@
-from span import Span
+from typing import Sequence, Optional, TYPE_CHECKING
 
-from typing import Sequence
+if TYPE_CHECKING:
+    from span import Span
+    from tape import Tape
 
 def _format_error_list(errors: Sequence[Exception]):
     assert errors, 'Empty error list'
@@ -9,37 +11,33 @@ def _format_error_list(errors: Sequence[Exception]):
         result += '\n\n' + str(e)
     return result
 
-class ParseError(RuntimeError):
+class ParseError(Exception):
     '''For when the program has syntax errors'''
     pass
 
 class SingleParseError(ParseError):
-    def __init__(self, msg: str, span: Span):
+    def __init__(self, msg: str, span: 'Span'):
         super().__init__(span.error_str() + msg)
 
 class MultiParseError(ParseError):
     def __init__(self, errors: Sequence[ParseError]):
         super().__init__(_format_error_list(errors))
 
-class ProgramError(RuntimeError):
+class ProgramError(Exception):
     '''For when the program fails at runtime'''
-    def set_context(self, span: Span, tape):
-        if self.span() is None:
-            self._span = span
-        result = ''
-        assert self.args, str(self) + ' has no args'
-        if self._span:
-            result += self._span.error_str()
-        if tape:
-            result += 'Tape: ' + str(tape) + '\n'
-        if result:
-            self.args = (result + self.args[0],) + self.args[1:]
+    def __init__(self, message: str):
+        self.message = message
+        self.tape: Optional[Tape] = None
+        self.span: Optional[Span] = None
 
-    def span(self):
-        if hasattr(self, '_span'):
-            return self._span
-        else:
-            return None
+    def __str__(self) -> str:
+        result = ''
+        if self.span:
+            result += self.span.error_str()
+        if self.tape:
+            result += 'Tape: ' + str(self.tape) + '\n'
+        result += self.message
+        return result
 
 class TestError(ProgramError):
     '''For when an assertion or test fails'''
@@ -47,9 +45,15 @@ class TestError(ProgramError):
 
 class OffEdgeOfTestTapeError(ProgramError):
     '''Spacial error when using a test tape that indicates the program has left the known range'''
-    pass
+    def __init__(self, tape: 'Tape'):
+        super().__init__('')
+        self.tape = tape
 
 class MultiProgramError(ProgramError):
     '''Bundles multiple errors together'''
     def __init__(self, errors: Sequence[ProgramError]):
-        super().__init__(_format_error_list(errors))
+        super().__init__('')
+        self.errors = errors
+
+    def __str__(self) -> str:
+        return _format_error_list(self.errors)

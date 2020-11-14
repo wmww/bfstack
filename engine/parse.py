@@ -1,5 +1,5 @@
 from instruction import Instruction
-from assertion import TapeAssertion, EmptyTapeAssertion, StartTapeAssertion, TestInput, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
+from assertion import TapeAssertion, AssertionReset, StartTapeAssertion, TestInput, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
 from op import Op, op_set
 from source_file import SourceFile
 from span import Span
@@ -74,7 +74,7 @@ def _split_on(span: Span, split: Set[str]) -> List[Span]:
             start = i + 1
     return result
 
-def _tape_assertion(span: Span) -> TapeAssertion:
+def _tape_assertion(span: Span) -> Instruction:
     cell_spans = _split_on(span, whitespace)[1:]
     cells: List[Matcher] = []
     offset_of_current = None
@@ -98,7 +98,7 @@ def _tape_assertion(span: Span) -> TapeAssertion:
             cell = _matcher(cell_span)
             cells.append(cell)
     if slide_left and len(cell_spans) == 1:
-        return EmptyTapeAssertion(span)
+        return AssertionReset(span)
     elif offset_of_current is None:
         raise SingleParseError('Assertion has no current cell', span)
     else:

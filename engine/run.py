@@ -20,16 +20,20 @@ def property_test_iteration(program: Program, start_code_index: int, assertion: 
         program.tape = assertion.random_matching_tape(ctx)
     except OffEdgeOfTestTapeError as e:
         # This will be ignored by calling function if we don't handle it
-        assert False, 'OffEdgeOfTestTapeError raised in test tape setup'
+        if not e.span:
+            e.span = assertion.span()
+        assert False, str(e) + '\nOffEdgeOfTestTapeError raised in test tape setup.'
     except ProgramError as e:
-        e.set_context(assertion.span(), None)
+        if not e.span:
+            e.span = assertion.span()
         raise
     program.current = start_code_index - 1
     program.io.reset()
     program.assertion_ctx = ctx
     while program.iteration():
-        if (program.current != start_code_index and
-            isinstance(program.code[program.current], TapeAssertion)):
+        has_moved = program.current != start_code_index
+        ends_block = program.code[program.current].ends_assertion_block()
+        if (has_moved and ends_block):
             break
 
 def run_property_tests(args: Args, program: Program):

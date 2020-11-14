@@ -2,20 +2,17 @@ from instruction import Instruction
 from program import Program
 from tape import Tape
 from assertion_ctx import AssertionCtx
-from errors import TestError
+from errors import TestError, OffEdgeOfTestTapeError
 from span import Span
 
 from typing import Sequence, Optional, List, Set
 
 class AssertionFailedError(TestError):
-    def __init__(self, state, actual: Optional[Tape], message: Optional[str], ctx: AssertionCtx):
+    def __init__(self, state, actual_tape: str, ctx: AssertionCtx):
         msg = '  Failed: ' + str(state)
-        if actual:
-            msg += '\n  Actual: ' + str(actual)
+        msg += '\n  Actual: ' + actual_tape
         if ctx.bound_vars:
             msg += '\n  ' + repr(ctx.bound_vars)
-        if message:
-            msg += '\n  ' + message
         super().__init__(msg)
 
 class Matcher:
@@ -125,6 +122,26 @@ class InverseMatcher(Matcher):
                 return i
         raise TestError('Literally nothing matches ' + str(self))
 
+class AssertionReset(Instruction):
+    def __init__(self, span: Span):
+        self._span = span
+
+    def __str__(self):
+        return '= ~'
+
+    def run(self, program: Program):
+        program.assertion_ctx.remove_unused_vars(set())
+        program.tape.set_assertion_bounds(None, None)
+
+    def loop_level_change(self) -> int:
+        return 0
+
+    def ends_assertion_block(self) -> bool:
+        return True
+
+    def span(self) -> Span:
+        return self._span
+
 class TapeAssertion(Instruction):
     def __init__(
             self, cells: Sequence[Matcher],
@@ -166,16 +183,32 @@ class TapeAssertion(Instruction):
         tape.check_range_allowed(left_edge, right_edge)
 
     def run(self, program: Program):
-        program.real_ops += 1
-        self.apply_bounds_to_tape(program.tape)
-        actual = [program.tape.get_value(i - self._offset_of_current) for i in range(len(self._cells))]
+        program.real_ops += 1 + len(self._cells)
+
+        try:
+            self.apply_bounds_to_tape(program.tape)
+        except OffEdgeOfTestTapeError:
+            # This means this assertion has a bigger range than the previous one in a property test
+            pass
+
         for i, cell in enumerate(self._cells):
-            cell.bind(program.assertion_ctx, actual[i])
+            try:
+                cell.bind(program.assertion_ctx, program.tape.get_value(i - self._offset_of_current))
+            except OffEdgeOfTestTapeError:
+                # This cell is off the range of what the tape knows about
+                pass
+
         for i, cell in enumerate(self._cells):
-            program.real_ops += 1
-            if not cell.matches(program.assertion_ctx, actual[i]):
-                actual_tape = Tape(self._offset_of_current, actual, False, False)
-                raise AssertionFailedError(self, actual_tape, None, program.assertion_ctx)
+            try:
+                if not cell.matches(program.assertion_ctx, program.tape.get_value(i - self._offset_of_current)):
+                    raise AssertionFailedError(
+                        self,
+                        program.tape.range_to_str(-self._offset_of_current, len(self._cells) - self._offset_of_current),
+                        program.assertion_ctx)
+            except OffEdgeOfTestTapeError:
+                # This cell is off the range of what the tape knows about
+                pass
+
         program.assertion_ctx.remove_unused_vars(self._used_variables)
 
     def loop_level_change(self) -> int:
@@ -183,6 +216,9 @@ class TapeAssertion(Instruction):
 
     def span(self) -> Span:
         return self._span
+
+    def ends_assertion_block(self) -> bool:
+        return True
 
     def random_matching_tape(self, ctx: AssertionCtx) -> Tape:
         for var in self._used_variables:
@@ -194,20 +230,6 @@ class TapeAssertion(Instruction):
         tape = Tape(self._offset_of_current, data, False, True)
         self.apply_bounds_to_tape(tape)
         return tape
-
-class EmptyTapeAssertion(TapeAssertion):
-    def __init__(self, span: Span):
-        self._span = span
-
-    def __str__(self):
-        return '= ~'
-
-    def run(self, program: Program):
-        program.assertion_ctx.remove_unused_vars(set())
-        program.tape.set_assertion_bounds(None, None)
-
-    def random_matching_tape(self, ctx: AssertionCtx) -> Tape:
-        return Tape(0, [], False, True)
 
 class StartTapeAssertion(TapeAssertion):
     def __init__(self, span: Span):
@@ -241,6 +263,9 @@ class TestInput(Instruction):
 
     def loop_level_change(self) -> int:
         return 0
+
+    def ends_assertion_block(self) -> bool:
+        return False
 
     def span(self) -> Span:
         return self._span

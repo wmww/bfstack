@@ -34,7 +34,7 @@ class Span:
     def length(self) -> int:
         return self._end_char - self._start_char
 
-    def sub_span(self, start_offset: int, end_offset: int):
+    def sub_span(self, start_offset: int, end_offset: int) -> 'Span':
         assert start_offset >= 0, 'Invalid start offset ' + str(start_offset)
         start_char = self._start_char + start_offset
         if end_offset >= 0:
@@ -48,30 +48,33 @@ class Span:
         #print('"' + self.text() + '"[' + str(start_offset) + ':' + str(end_offset) + '] -> "' + result.text() + '"')
         return result
 
-    def __getitem__(self, val):
-        if isinstance(val, slice):
-            start = val.start if val.start else 0
-            stop = val.stop if val.stop else self._end_char - self._start_char
-            assert val.step is None or val.step == 1, 'Invalid step ' + str(val.step)
-            return self.sub_span(start, stop)
+    def __getitem__(self, val) -> 'Span':
+        assert isinstance(val, slice), '__getitem__() called on Span with non-slice ' + str(type(val))
+        start = val.start if val.start else 0
+        stop = val.stop if val.stop else self._end_char - self._start_char
+        assert val.step is None or val.step == 1, 'Invalid step ' + str(val.step)
+        return self.sub_span(start, stop)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             os.path.relpath(self._source.path()) + ':' + str(self.line()) + ' ' +
             str(self.col()) + '..' + str(self.col() + self.length() - 1))
 
     def error_str(self) -> str:
+        '''Format in a way suitable for error messages, ends with a newline'''
         result = os.path.relpath(self._source.path()) + ':' + str(self.line()) + ':\n'
         result += self._source.line_text(self.line()) + '\n'
         result += ' ' * (self.col() - 1) + '^' * self.length() + '\n'
         return result
 
-    def extend_to(self, other):
+    def extend_to(self, other: 'Span') -> 'Span':
+        '''Combine two spans'''
         start = min(self._start_char, other._start_char)
         end = max(self._end_char, other._end_char)
         return Span(self._source, start, end)
 
-    def strip(self):
+    def strip(self) -> 'Span':
+        '''Like str.strip(), strips whitespace'''
         text = self.text()
         start = self._start_char
         end = self._end_char

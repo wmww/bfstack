@@ -84,6 +84,9 @@ class Block(Instruction):
     def loop_level_change(self) -> int:
         return 0
 
+    def ends_assertion_block(self) -> bool:
+        return False
+
     def span(self) -> Span:
         return self._span
 
