@@ -89,6 +89,8 @@ def _tape_assertion(span: Span) -> Instruction:
                 slide_right = True
             else:
                 raise SingleParseError('"~" not allowed anywhere but the start and end', cell_span)
+        elif text == '|':
+            pass;
         else:
             if text.startswith('`'):
                 if offset_of_current is not None:
