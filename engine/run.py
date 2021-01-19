@@ -23,10 +23,19 @@ def property_test_iteration(program: Program, start_code_index: int, seed: str):
     program.io.reset()
     program.assertion_ctx = ctx
     try:
+        max_iters = 10000
+        current_iter = 0
         program.iteration()
         while program.iteration():
-            if (program.code[program.current].ends_assertion_block()):
+            instr = program.code[program.current]
+            if (instr.ends_assertion_block()):
                 break
+            current_iter += 1
+            if current_iter > max_iters:
+                error = ProgramError('Took too long to complete')
+                error.tape = program.tape
+                error.span = instr.span()
+                raise error
     except OffEdgeOfTestTapeError:
         pass # this is expected, the test is now over
 
