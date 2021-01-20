@@ -9,9 +9,6 @@ __WIP, framework minimally function, documentation not complete__
 ## But all that is impossible in Brainfuck
 Shut up. I'm clever.
 
-## In this document…
-TODO: outline the architecture of the framework, and document how to build a working program using it.
-
 ## Compatibility
 TODO: describe what the expectations are made of the Brainfuck environment
 
@@ -30,34 +27,34 @@ BFStack programs contain the following abstractions:
 - `Invocation ID`: Contains a module call, subroutine call and label cell. When stored in a word, they are in that order with the right-most cell always 0. Can be thought of like a C funciton pointer (except it can specify a specific label within the subroutine).
 
 ## Framework Architecture
-At it's core, the framework is a loop that runs subroutine sections. There are three types of iterations:
-1. Invoking a new subroutine
-2. Returning to the middle of a previous subroutine
-3. Halt
+A BFStThere are three types of iterationsack program can be thought of as a big switch statement with one branch for each module. Inside each module is a switch containing all the subroutines and in each subroutine is a switch containing each section. At it's core, the framework is a loop that runs one of these subroutine sections per iteration.
 
-### Invoking a New Subroutine
-To invoke a new subroutine, the tape should be set up like so:
+### Subroutine-Framework Interface
+When the program enters a subroutine the tape looks like so:
 ```
-= | M S 0 0 | 0 0 | `* * * * | 0 0 | ...
+= | M S 1 0 | 0 1 | `* * * * | 0 0 | ...
 ```
-Where M is the module of the subroutine and S is the subroutine. The `*`s are the arguments to the subroutine (and can be as few or as many words as the subroutine requires). When the program enters the subroutine, the tape will look like this:
-```
-= | M S 1 0 | 1 0 | `* * * * | 0 0 | ...
-```
-Note that the framework bumps the label to 1 (because we enter at the first section of the subroutine) and sets the 1st padding cell to 1 (to indicate the preceding word is a subroutine on the call stack). The arguments are not touched and the current position is restored.
+Where `M` is the module of the subroutine and `S` is the subroutine. The `*`s are the arguments to the subroutine (and can be as few or as many words as the subroutine requires). The `1` indicates the label. Initially, we are in the first section so label is 1. This label will increase depending on what section we're in.
 
-### Returning to a Previous Subroutine
-When returning, the call stack should look like this:
-```
-= | M S L 0 | 1 0 | `* * * * | 0 0 | ...
-```
-Note that this is exactly how the tape was when the subroutine started. The pointer must be in the same place. The `*`s now represent the returned value. It can be as many words as you like, but the call must expect it and clean it up. Control is then passed back to the next section of the caller and the tape looks like so:
+When a subroutine gets control back after calling another subroutine, the tape looks like this:
 ```
 = | 0 0 0 0 | 0 0 | `* * * * | 0 0 | ...
 ```
+This will be offset from the original entry point. The label (originally 1) at the entry point will have been incremented.
 
-### Halt
-To halt, leaave the tape like this (this should probably be done by a std subroutine):
+When a subroutine gives control back to the framework (either to return to it's caller, invoke another subroutine or abort) it leaves the tape like this:
 ```
-= | 0 0 0 0 | 1 0 | `* * * * | 0 0 | ...
+= | M S L 0 | 0 C | `* * * * | 0 0 | ...
 ```
+The `*`s are the return value (can be as many words as you want but the caller must expect and consume it). `C` is the return code, which tells the framework what to do (see next section). Some of `M`, `S`, and `L` may be zero depending on the return code.
+
+### Return Codes
+- `0`: Invoke a subroutine. A new subroutine will be invoked and when it completes the next label of the calling subroutine will be invoked.
+  - `M` must be set
+  - `S` must be set
+  - `L` should be zero, and it will be automatically bumped to 1
+- `1`: Return to the subroutine that invoked this one. Must be at the original entry point of this subroutine. `M`, `S` and `L` should not have been touched. They will be automatically cleared.
+- `2`: Abort. Graceful shutdown of the program. `M`, `S` and `L` do not matter. Generally this is used by invoking std::abort
+- `3`: No such module. Indicates M is an invalid module. Will show an error and abort. Generally set automatically, but can be set manually to mark a module as invalid.
+- `4`: No such subroutine. Same, but for subroutines.
+- `5`: No such label. Same, but for labels.
