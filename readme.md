@@ -15,6 +15,7 @@ Shut up. I'm clever.
 
 ## Links
 - [minify.bf](tools/minify.bf): minifies brainfuck code, and is a relatively simple example of a program build with the framework
+- [framework.bf](framework/framework.bf): the framework and standard library, with comments and assertions
 - [how-to-run.md](how-to-run.md): talks about compatibility and tools to run brainfuck
 - [architecture.md](architecture.md): describes framework architecture
 - [engine/readme.md](engine/readme.md): Our own brainfuck interpreter and testing framework
