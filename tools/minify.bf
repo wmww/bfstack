@@ -2,7 +2,7 @@
 This program was built with BFStak v0.3 (https://github.com/wmww/bfstack)
 It should run in any standard Brainfuck environment
 
-NOTE: requires EOF to be either zero or leave the cell unchanged
+EOF may be 0, -1 or cell unchanged
 ]
 
 M: module
@@ -96,12 +96,12 @@ subroutine_start{ [>+<-[[<+>-]>-<]>[<+>-]<[-<<[>+>+<<-]>[<+>-]>[>+<-[[<+>-]>-<]>
     <<< <<< <<< <<
     = M S L 0 | 0 1 | 0 `c 0 0
 
-    if c is not null do tail recursion by setting the return code to 0 and setting our label to 1
+    if c is not 0 or neg 1 do tail recursion by setting the return code to 0 and setting our label to 1
     if c is null we will return
-    [
+    [+[
         <<-<<<[-]+>>>>>[-]
         = M S 1 0 | 0 0 | 0 `0 0 0
-    ]<
+    ]]<
     = M S * 0 | 0 * | `0 0 0 0
 
 subroutine_end{ <<]]<[>+<-]>[>[-]+++++<[-]]]]<[>+<-]> }
