@@ -14,7 +14,7 @@ A BFStack program can be thought of as one big switch statement inside a loop. E
 
 At an implementation level this is achieved by copying the module number, and decrementing it once for each module in the program until it hits zero. Whent that happens, we know the module we're at is the one with the desired subroutine. Inside that module we then copy the subroutine ID and decrement that until it hits zero. Same for the label. Once the subroutine section is done the key number is set to zero and no more labels, subroutines or modules are run. The [framework](framework/framework.bf) and [case](framework/case.bf) source code have more details.
 
-### Subroutine-framework interface
+## Subroutine-framework interface
 When the program enters a subroutine the tape looks like so (the tape is shown using the BFStack [engine's assertion syntax](engine/readme.md). `` ` `` indicates the current cell. `|`s just hint at the word alignment, and are otherwise not significant):
 ```
 = | M S 1 0 | 0 1 | `* * * * | 0 0 | ...
@@ -33,7 +33,7 @@ When a subroutine gives control back to the framework (either to return to it's 
 ```
 The `*`s are the return value (can be as many words as you want but the caller must expect and consume it). `C` is the return code, which tells the framework what to do (see next section). Some of `M`, `S`, and `L` may be zero depending on the return code.
 
-### Return codes
+## Return codes
 - `0`: Invoke a subroutine. A new subroutine will be invoked and when it completes the next label of the calling subroutine will be invoked.
   - `M` must be set
   - `S` must be set

@@ -1,15 +1,8 @@
 # BFStack Engine
-This is a sub-project of BFStack. It is a Brainfuck interpreter implemented in Python3 that supports features useful for development of the framework itself and programs that use it. BFStack programs should run in any compatible environment (see [root BFStack readme](../readme.md) for details) but this engine has some bonus features over a standard interpreter (notably, the assertion system).
+This is a sub-project of BFStack. It is a Brainfuck interpreter implemented in Python3 that supports features useful for development of the framework itself and programs that use it. BFStack programs should run in any standard Brainfuck environment, but this engine has some bonus features over a standard interpreter (notably, the assertion system).
 
 ## Characteristics
-For now, BFStack Engine only supports 8-bit (0 - 255) cells with standard overflow behavior. It allows an arbitrary number of cells to the right (only constrained by host system memory) and errors if the program attempts to go to the left of the start position. Newlines are ASCII 10.
-
-## Optimizations
-Sequences of `+`, `-`, `<` and `>` are collapsed down such that the interpreter only has to add one value to each cell changed (even if a single cell is changed multiple times in the sequence). If a loop contains only those four operations, does not contain a net change to the pointer position and the initial cell is decremented by exactly 1, the loop is unrolled into a constant time operation.
-
-With the `-i` flag, you can see how many emulated Brainfuck operations were run (ie how many operations would have been run on a naive interpreter) and how many operations were actually run. Not all of the "real" operations have the same cost, but they are all constant time.
-
-Optimizations can not be made across assertions if enabled. If assertions are not enabled, they do not effect optimization or runtime performance.
+For now, BFStack Engine only supports 8-bit (0 - 255) cells with standard overflow behavior. It allows an arbitrary number of cells to the right (only constrained by host system memory) and errors if the program attempts to go to the left of the start position. Newlines are ASCII 10. EOF is 0.
 
 ## Tests
 All tests are currently integration tests found in the tests directory. `run_engine_tests.py` automatically detects and runs all tests. Tests that end with `_fails` are supposed to fail an assertion or encounter a runtime error (such as going too far left). Since tests are just Brainfuck source files with assertions, they should be portable across implementations (assuming they support the assertion syntax specified below)
@@ -32,11 +25,14 @@ Matchers are composable expressions that can either match or not match a number.
 - `0`, `1`, `48`, etc: value literals match only their exact value.
 - `A`, `FOO`, `count_4`, etc: variables which can be any sequence of letters, underscores and numbers that start with a letter. If the same name didn't appear in the last assertion they are considered "unbound" and match anything. Otherwise, they are considered "bound" to the value they were before and only match that.
 - `*`: wildcard, matches any value.
-- `@`*<character>*: matches the ASCII value of the given character. *<character>* may be an escape sequence (see below). All ASCII characters are allowed except Brainfuck operations, backslash and whitespace.
+- `@`*<character>*: matches the ASCII value of the given character. *<character>* may be an escape sequence (see below). All ASCII characters are allowed except Brainfuck operations, backslash and whitespace. _NOTE: this is proving to be not particularly useful and may be removed._
 - `!`: inverses the following matcher (only matches if it does not match). Can not be applied to an unbound variable.
 
 #### Escape Sequences
 An easy way to refer to special characters including characters reserved for Brainfuck operations.
+
+_NOTE: these are proving not particularly useful and may be removed._
+
 - `\n`: newline (ASCII 10)
 - `\t`: tab (ASCII 9)
 - `\s`: space (ASCII 32)
@@ -52,3 +48,10 @@ An easy way to refer to special characters including characters reserved for Bra
 
 ## Property Tests
 If the `-p` flag is specified, instead of running the program once and exiting, property tests are run. Each test starts at an assertion, generates random values that match that assertion and runs the program to the next assertion or end of file. Each block of code is tested a number of times.
+
+## Optimizations
+Sequences of `+`, `-`, `<` and `>` are collapsed down such that the interpreter only has to add one value to each cell changed (even if a single cell is changed multiple times in the sequence). If a loop contains only those four operations, does not contain a net change to the pointer position and the initial cell is decremented by exactly 1, the loop is unrolled into a constant time operation.
+
+With the `-i` flag, you can see how many emulated Brainfuck operations were run (ie how many operations would have been run on a naive interpreter) and how many operations were actually run. Not all of the "real" operations have the same cost, but they are all constant time. The `-0` flag disables all optimizations.
+
+Optimizations can not be made across assertions if enabled. If assertions are not enabled, they do not effect optimization or runtime performance.
