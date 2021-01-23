@@ -1,22 +1,28 @@
 # BFStack
 *A framework for writing Brainfuck programs with a call stack*
 
-__WIP, framework minimally function, documentation not complete__
+__Note that BFStack is still a work-in-progress, but initial examples are functional__
 
 ## What is BFStack?
-[Boilerplate](bfstack.bf) and a set of rules (this document) for writing programs that will run in a standard Brainfuck environment. Unlike traditional Brainfuck programs, BFStack code is broken up into subroutines. This allows for abstractions, modularity and testability. Subroutines can even call themselves recursively.
+BFStack is a Brainfuck framework. It consists of [boilerplate code](framework/framework.bf) and documentation that make it easier to write Brainfuck by hand. BFStack is __not__ a different language or a transpiler. BFStack programs run in a standard Brainfuck environment.
+
+## How does BFStack help me, a Brainfuck developer
+Unlike traditional Brainfuck programs, BFStack code is broken up into subroutines. This allows for abstractions, modularity and testability. Subroutines can even call themselves recursively.
 
 ## But all that is impossible in Brainfuck
 Shut up. I'm clever.
 
 ## Compatibility
-TODO: describe what the expectations are made of the Brainfuck environment
+The core framework should work in any standard brainfuck environment. It does not require values >255 and should never overflow. Subroutines in the standard library may overflow, but should not make any assumptions about cell size. Standard library functions that deal with input should accept 0, -1 or an unchanged cell as EOF. Of course the user of the framework may make whatever assumptions about the environment they wish.
 
 ## Engine
-To aid with development, BFStack includes a Python3 Brainfuck interpreter in the `engine/` subdirectory. The simplest way to run a program is `./engine/main.py bfstack.bf`. BFStack programs can be run in any compatible Brainfuck environment, but our engine has some extra features. Notably, it optionally implements assertion checking and property tests. It has no external dependencies except Python3. See [engine/readme.md](engine/readme.md) for more information.
+To aid with development, BFStack includes a Python3 Brainfuck interpreter in the `engine/` subdirectory. The simplest way to run a program is `./engine/main.py framework/framework.bf`. BFStack programs can be run in any compatible Brainfuck environment, but our engine has some extra features. Notably, it optionally implements assertion checking and property tests. It has no external dependencies except Python3. See [engine/readme.md](engine/readme.md) for more information.
 
 ## License
 The framework, engine and engine tests are licensed under the permissive MIT license. The only files not licensed under MIT are those found in `engine/bf`. See those individual files for more information.
+
+## Examples
+- [minify](tools/minify.bf): minify brainfuck code
 
 ## Concepts
 BFStack programs contain the following abstractions:
@@ -26,11 +32,11 @@ BFStack programs contain the following abstractions:
 - `Word`: A word contains 4 cells for data, and generally takes up 6 cells on the tape. The stack needs to always be alligned to words, and the two padding cells of each word should never be modified by user code.
 - `Invocation ID`: Contains a module call, subroutine call and label cell. When stored in a word, they are in that order with the right-most cell always 0. Can be thought of like a C funciton pointer (except it can specify a specific label within the subroutine).
 
-## Framework Architecture
+## Framework architecture
 A BFStThere are three types of iterationsack program can be thought of as a big switch statement with one branch for each module. Inside each module is a switch containing all the subroutines and in each subroutine is a switch containing each section. At it's core, the framework is a loop that runs one of these subroutine sections per iteration.
 
-### Subroutine-Framework Interface
-When the program enters a subroutine the tape looks like so:
+### Subroutine-framework Interface
+When the program enters a subroutine the tape looks like so (the tape is shown using the BFStack [engine's assertion syntax](engine/readme.md). `` ` `` indicates the current cell. `|`s just hint at the word alignment, and are otherwise not significant):
 ```
 = | M S 1 0 | 0 1 | `* * * * | 0 0 | ...
 ```
@@ -48,7 +54,7 @@ When a subroutine gives control back to the framework (either to return to it's 
 ```
 The `*`s are the return value (can be as many words as you want but the caller must expect and consume it). `C` is the return code, which tells the framework what to do (see next section). Some of `M`, `S`, and `L` may be zero depending on the return code.
 
-### Return Codes
+### Return codes
 - `0`: Invoke a subroutine. A new subroutine will be invoked and when it completes the next label of the calling subroutine will be invoked.
   - `M` must be set
   - `S` must be set
