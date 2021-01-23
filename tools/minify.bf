@@ -81,28 +81,64 @@ module_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- <<<[>>+>+<<<-]>>[<<+>>-]> }
 
 main(1)
 subroutine_start{ [>+<-[[<+>-]>-<]>[<+>-]<[-<<[>+>+<<-]>[<+>-]>[>+<-[[<+>-]>-<]>[<+>-]<[->+> }
-    = M S L 0 | 0 1 | `0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0
+    = M S L 0 | 0 1 | `i 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0
+    i is the number of bf characters since a newline
 
     get and copy input character
-    ,[>+>> >>> >>> >>>+<<< <<< <<< <<<-]>>> >>>
-    = 0 1 | 0 c 0 0 | 0 0 | `0 0 0 0 | 0 0 | c 0 0 0
+    >,[>+>> >>> >>> >>+<<< <<< <<< <<-]>>> >>
+    = 0 1 | i 0 c 0 | 0 0 | `0 0 0 0 | 0 0 | c 0 0 0
 
     invoke 2::process_char(2)
     ++>++>+>>>>
-    = 0 1 | 0 c 0 0 | 0 0 | 2 2 1 0 | 0 0 | `c 0 0 0
+    = 0 1 | i 0 c 0 | 0 0 | 2 2 1 0 | 0 0 | `c 0 0 0
     invoke { <<]]<[>+<-]>[>+<-[[<+>-]>-<]>[<+>-]<[-<<<<[[-]>]>>> }
-    = 0 1 | 0 c 0 0 | 0 0 | 0 0 0 0 | 0 0 | `0 0 0 0
+    = 0 1 | i 0 c 0 | 0 0 | 0 0 0 0 | 0 0 | `found_match 0 0 0
 
-    <<< <<< <<< <<
-    = M S L 0 | 0 1 | 0 `c 0 0
+    found_match will be true if the character was a brainfuck character
+    [
+        if found_match bump i
+        <<< <<< <<< <<<+>>> >>> >>> >>>[-]
+        = 0 1 | !i 0 c 0 | 0 0 | 0 0 0 0 | 0 0 | `0 0 0 0
+        = 0 1 |  * 0 c 0 | 0 0 | 0 0 0 0 | 0 0 | `0 0 0 0
+    ]
+
+    copy i (used to determine if to print newline)
+    <<< <<< <<< <<<[>+>> >>> >>> >>>+<<< <<< <<< <<<-]>[<+>-]>>> >>> >>> >>> >
+    = M S L 0 | 0 1 | i 0 c 0 | 0 0 | 0 0 0 0 | 0 0 | i 0 `0 0
+
+    put the max line length in the 2nd slot to compare
+    ++++++++++[<++++++++>-]<
+    = M S L 0 | 0 1 | i 0 c 0 | 0 0 | 0 0 0 0 | 0 0 | i `80 0 0
+    = M S L 0 | 0 1 | i 0 c 0 | 0 0 | 0 0 0 0 | 0 0 | i `max 0 0
+
+    invoke 2::cell_eq(3)
+    <<< <<< <++>+++>+>>>>
+    = 0 1 | i 0 c 0 | 0 0 | 2 3 1 0 | 0 0 | `i max 0 0
+    invoke { <<]]<[>+<-]>[>+<-[[<+>-]>-<]>[<+>-]<[-<<<<[[-]>]>>> }
+    = 0 1 | i 0 c 0 | 0 0 | 0 0 0 0 | 0 0 | `newline 0 0 0
+
+    if newline print a newline and clear i
+    [
+        [-]++++++++++
+        = 0 1 | i 0 c 0 | 0 0 | 0 0 0 0 | 0 0 | `10 0 0 0
+        .[-]
+        <<< <<< <<< <<<
+        [-]
+        >>> >>> >>> >>>
+        = 0 1 | 0 0 c 0 | 0 0 | 0 0 0 0 | 0 0 | `0 0 0 0
+    ]
+
+    <<< <<< <<< <
+
+    = M S L 0 | 0 1 | i 0 `c 0
 
     if c is not 0 or neg 1 do tail recursion by setting the return code to 0 and setting our label to 1
     if c is null we will return
     [+[
-        <<-<<<[-]+>>>>>[-]
-        = M S 1 0 | 0 0 | 0 `0 0 0
-    ]]<
-    = M S * 0 | 0 * | `0 0 0 0
+        <<<-<<<[-]+>>>>>>[-]
+        = M S 1 0 | 0 0 | i 0 `0 0
+    ]]<<
+    = M S * 0 | 0 * | `i 0 0 0
 
 subroutine_end{ <<]]<[>+<-]>[>[-]+++++<[-]]]]<[>+<-]> }
 
@@ -291,10 +327,15 @@ subroutine_start{ [>+<-[[<+>-]>-<]>[<+>-]<[-<<[>+>+<<-]>[<+>-]>[>+<-[[<+>-]>-<]>
 
     >[-]<<<
     = 0 1 | `found_match c 0 0
-    [[-]>.<]
-    = 0 1 | `0 c 0 0
-    >[-]<
-    = ~ 0 1 | `0 0 0 0
+    copy found_match
+    [>>+>+<<<-]>>>[<<<+>>>-]
+    = 0 1 | found_match c found_match `0
+    if found_match print the character
+    <[[-]<.>]
+    = 0 1 | found_match c `0 0
+    <[-]<
+    return found_match
+    = ~ 0 1 | `found_match 0 0 0
 
 subroutine_end{ <<]]<[>+<-]>[>[-]+++++<[-]]]]<[>+<-]> }
 
