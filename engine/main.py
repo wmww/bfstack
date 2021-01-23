@@ -18,7 +18,7 @@ class UserIo(Io):
         self.input_buffer: List[str] = []
 
     def push_output(self, value: int):
-        print(chr(value), end='')
+        print(chr(value), end='', flush=True)
 
     def pull_input(self) -> int:
         if not self.input_buffer:
