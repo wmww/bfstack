@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class UserIo(Io):
     def __init__(self) -> None:
         self.input_time: float = 0.0
-        self.input_buffer: List[str] = []
+        self.input_buffer: List[int] = []
 
     def push_output(self, value: int):
         print(chr(value), end='', flush=True)
@@ -23,10 +23,13 @@ class UserIo(Io):
     def pull_input(self) -> int:
         if not self.input_buffer:
             start_time = time.time()
-            self.input_buffer = list(input('input: ')) + ['\n']
+            try:
+                self.input_buffer = list(map(ord, list(input('input: ')) + ['\n']))
+            except EOFError:
+                self.input_buffer = [0]
             end_time = time.time()
             self.input_time += end_time - start_time
-        return ord(self.input_buffer.pop(0))
+        return self.input_buffer.pop(0)
 
     def queue_input(self, values: List[int]):
         pass
