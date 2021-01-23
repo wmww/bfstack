@@ -84,9 +84,10 @@ case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
         copy_L{ <<[>+>+<<-]>[<+>-]> }
         = M S L 0 | `L 0
         case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
-            = M S L 0 | `0 0 | * * * *
+            = M S L 0 | `0 0 | 0 0 0 0
             sub_init{ >+> }
-            = M S L 0 | 0 1 | `* * * *
+
+            = M S L 0 | 0 1 | `0 0 0 0
             [-][ print "a" ]
             ++++++++++
             ++++++++++
@@ -99,7 +100,58 @@ case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
             ++++++++++
             +++++++.
             [-]
+            = M S L 0 | 0 1 | `0 0 0 0 | 0 0 | 0
+
+            invoke 2::2
+            ++>++>+>>>>
+            = 2 2 1 0 | 0 0 | `0
+            invoke {
+                <<
+                case_end{ ]]<[>+<-]> }
+                case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+                = ~
+                <<<<[[-]>]>>>
+            }
+            = 0 0 0 0 | 0 0 | `0
+
+            <<<<<<
             = M S L 0 | 0 1 | `0
+
+            sub_finish{ << }
+            = M S L 0 | `0 1 |
+        case_end{ ]]<[>+<-]> }
+        = M S L 0 | `* *
+
+        if there's still a value the throw "no such label" (return code 5)
+        end_sub{ [>[-]+++++<[-]] }
+        = M S L 0 | `0 C
+
+    case_end{ ]]<[>+<-]> }
+    = M S L 0 | `* *
+    case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+        = ~
+        = M S L 0 | `0 0
+        copy_L{ <<[>+>+<<-]>[<+>-]> }
+        = M S L 0 | `L 0
+        case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+            = M S L 0 | `0 0 | 0 0 0 0
+            sub_init{ >+> }
+
+            = M S L 0 | 0 1 | `0 0 0 0
+            [-][ print "b" ]
+            ++++++++++
+            ++++++++++
+            ++++++++++
+            ++++++++++
+            ++++++++++
+            ++++++++++
+            ++++++++++
+            ++++++++++
+            ++++++++++
+            ++++++++.
+            [-]
+            = M S L 0 | 0 1 | `0 0 0 0 | 0 0 | 0
+
             sub_finish{ << }
             = M S L 0 | `0 1 |
         case_end{ ]]<[>+<-]> }
@@ -130,36 +182,10 @@ switch on C plus 1 (because switches don't handle 0)
 
 case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     return code is 0 so invoke a subroutine
-    (but this is not implemented so actually error)
-    [-][ print "ERR_INVK\n" ]
-    ++++++++++
-    ++++++++++
-    ++++++++++
-    ++++++++++
-    ++++++++++
-    ++++++++++
-    +++++++++.
-    ++++++++++
-    +++.
-    .
-    ++++++++++
-    +++.
-    ----------
-    ----------
-    --.
-    +++++.
-    ++++++++.
-    ----------
-    -.
-    ----------
-    ----------
-    ----------
-    ----------
-    ----------
-    ----------
-    -----.
-    [-]
-    this will then abort
+    TODO: set the namespace subroutine and/or label to default values if they are null
+    = M S L 0 | `0 0
+    >+<
+    = M S L 0 | `0 1
 case_end{ ]]<[>+<-]> }
 case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     return code is 1 so return
