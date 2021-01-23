@@ -16,6 +16,10 @@ class UserIo(Io):
     def __init__(self) -> None:
         self.input_time: float = 0.0
         self.input_buffer: List[int] = []
+        if sys.stdin.isatty():
+            self.input_prompt = 'input: '
+        else:
+            self.input_prompt = ''
 
     def push_output(self, value: int):
         print(chr(value), end='', flush=True)
@@ -24,7 +28,7 @@ class UserIo(Io):
         if not self.input_buffer:
             start_time = time.time()
             try:
-                self.input_buffer = list(map(ord, list(input('input: ')) + ['\n']))
+                self.input_buffer = list(map(ord, list(input(self.input_prompt)) + ['\n']))
             except EOFError:
                 self.input_buffer = [0]
             end_time = time.time()
