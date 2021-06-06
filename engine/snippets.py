@@ -60,13 +60,15 @@ class _Validator:
                 stack.append(instr)
             elif isinstance(instr, SnippetEnd):
                 if len(stack) == 0:
-                    error_accumulator.append(SingleParseError('Unmatched }', instr.span()))
+                    error_accumulator.append(SingleParseError('Unmatched "}"', instr.span()))
                 else:
                     start = stack.pop()
                     try:
                         self._db[start.name].link(start.span().extend_to(instr.span()))
                     except SingleParseError as e:
                         error_accumulator.append(e)
+        for snippet in reversed(stack):
+            error_accumulator.append(SingleParseError('Unmatched "' + snippet.name + '{"', snippet.span()))
 
 def process(code: List[Instruction]) -> List[Instruction]:
     '''Raises a parse error if all snippets do not match, returns list with snippets removed'''
