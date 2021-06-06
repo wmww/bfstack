@@ -4,15 +4,17 @@ from tape import Tape
 from assertion_ctx import AssertionCtx
 from errors import TestError, OffEdgeOfTestTapeError
 from span import Span
+from colors import make_color, Color
 
 from typing import Sequence, Optional, List, Set
 
 class AssertionFailedError(TestError):
-    def __init__(self, state, actual_tape: str, ctx: AssertionCtx):
-        msg = '  Failed: ' + str(state)
-        msg += '\n  Actual: ' + actual_tape
+    def __init__(self, state: 'TapeAssertion', actual_tape: str, ctx: AssertionCtx):
+        msg = 'Assertion failed:'
+        msg += '\n     Actual: ' + make_color(Color.TAPE, actual_tape)
+        msg += '\n  Assertion: ' + make_color(Color.ERROR, str(state))
         if ctx.bound_vars:
-            msg += '\n  ' + repr(ctx.bound_vars)
+            msg += '\n  Variables: ' + make_color(Color.INFO, repr(ctx.bound_vars))
         super().__init__(msg)
 
 class Matcher:

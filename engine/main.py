@@ -4,6 +4,7 @@ from args import Args
 from errors import ProgramError, ParseError
 from io_interface import Io
 from run import run
+from colors import make_color, Color
 
 import sys
 import time
@@ -59,7 +60,7 @@ def main() -> None:
     except ParseError as e:
         logger.error('Syntax error: ' + str(e))
     except ProgramError as e:
-        logger.error('Program failed: ' + str(e))
+        logger.error(make_color(Color.ERROR, 'Program failed: ') + str(e))
     if not success:
         exit(1)
 

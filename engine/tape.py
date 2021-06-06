@@ -1,5 +1,6 @@
 from errors import ProgramError, TestError, OffEdgeOfTestTapeError
 from typing import List, Optional
+from colors import make_color, Color
 
 MAX_PRINT_LEN = 64
 
@@ -61,7 +62,7 @@ class Tape:
         if right_chop > 0:
             result += ' … (' + str(right_chop) + ' cells)'
 
-        return result
+        return make_color(Color.TAPE, result)
 
     def get_position(self) -> int:
         return self._position

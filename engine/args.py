@@ -28,6 +28,8 @@ class Args:
             help='run each assertion block independently with random values')
         parser.add_argument('-i', '--info', action='store_true', help='show stats and other debugging info')
         parser.add_argument('-0', '--no-optimize', action='store_true', help='don\'t apply any optimizations')
+        parser.add_argument('-c', '--color', action='store_true', help='force enable terminal colors')
+        parser.add_argument('-C', '--no-color', action='store_true', help='force disable terminal colors')
         result = parser.parse_args(argv)
         self.source_path = result.source_file
         self.snippets = result.snippets
@@ -35,3 +37,9 @@ class Args:
         self.show_info = result.info
         self.optimize = not result.no_optimize
         self.prop_tests = result.property_test
+
+        import colors
+        if result.color:
+            colors.use_color = True
+        if result.no_color:
+            colors.use_color = False

@@ -1,5 +1,6 @@
 from source_file import SourceFile
 from op import op_set
+from colors import make_color, Color
 
 import os
 from typing import Optional
@@ -66,12 +67,12 @@ class Span:
 
     def error_str(self) -> str:
         '''Format in a way suitable for error messages, ends with a newline'''
-        result = os.path.relpath(self._source.path()) + ':' + str(self.line()) + ':\n'
+        result = make_color(Color.FILEPATH, os.path.relpath(self._source.path()) + ':' + str(self.line()) + ':\n')
         result += self._source.line_text(self.line()) + '\n'
         if self.length() > 0:
-            result += ' ' * (self.col() - 1) + '^' * self.length() + '\n'
+            result += make_color(Color.ERROR, ' ' * (self.col() - 1) + '^' * self.length() + '\n')
         else:
-            result += ' ' * (self.col() - 1) + '\_[zero-length span]' + '\n'
+            result += make_color(Color.ERROR, ' ' * (self.col() - 1) + '\_[zero-length span]' + '\n')
         return result
 
     def extend_to(self, other: 'Span') -> 'Span':

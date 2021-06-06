@@ -1,5 +1,7 @@
 from typing import Sequence, Optional, TYPE_CHECKING
 
+from colors import make_color, Color
+
 if TYPE_CHECKING:
     from span import Span
     from tape import Tape
@@ -10,7 +12,10 @@ class MultiError:
         self.errors = errors
 
     def __str__(self) -> str:
-        result = str(len(self.errors)) + ' error' + ('s' if len(self.errors) != 1 else '') + ':'
+        result = make_color(
+            Color.ERROR,
+            str(len(self.errors)) + ' error' + ('s' if len(self.errors) != 1 else '') + ':'
+        )
         for e in self.errors:
             result += '\n' + str(e) + '\n'
         return result
@@ -21,7 +26,7 @@ class ParseError(Exception):
 
 class SingleParseError(ParseError):
     def __init__(self, msg: str, span: 'Span'):
-        super().__init__(span.error_str() + msg)
+        super().__init__(span.error_str() + make_color(Color.ERROR, msg))
 
 class MultiParseError(MultiError, ParseError):
     pass
