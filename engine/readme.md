@@ -21,30 +21,11 @@ A whitespace-separated `|` can be inserted and has no effect. It can be used for
 Lines queuing test input have the same syntax as assertions, except that they start with a `$` and don't have a current cell marker. Test input has no effect if the program is being run interactively (real user input is __not__ checked against it). If not being run interactively, matching values are generated and queued up. Random values are chosen if the matcher can match more than one value. All input must be consumed before the end of the program or the next test input line.
 
 ### Matcher Syntax
-Matchers are composable expressions that can either match or not match a number. Whitespace is not allowed within a matcher. Matchers are composed of:
+Matchers are composable expressions that can either match or not match a cell value. Whitespace is not allowed within a matcher. Matchers are composed of:
 - `0`, `1`, `48`, etc: value literals match only their exact value.
-- `A`, `FOO`, `count_4`, etc: variables which can be any sequence of letters, underscores and numbers that start with a letter. If the same name didn't appear in the last assertion they are considered "unbound" and match anything. Otherwise, they are considered "bound" to the value they were before and only match that.
+- `A`, `FOO`, `count_4`, etc: variables which can be any sequence of ASCII letters, underscores and numbers. It must not start with a number. If the same name didn't appear in the last assertion it is considered "unbound" and matches anything. Otherwise, it is considered "bound" to the value it was before and only matches that.
 - `*`: wildcard, matches any value.
-- `@`*<character>*: matches the ASCII value of the given character. *<character>* may be an escape sequence (see below). All ASCII characters are allowed except Brainfuck operations, backslash and whitespace. _NOTE: this is proving to be not particularly useful and may be removed._
 - `!`: inverses the following matcher (only matches if it does not match). Can not be applied to an unbound variable.
-
-#### Escape Sequences
-An easy way to refer to special characters including characters reserved for Brainfuck operations.
-
-_NOTE: these are proving not particularly useful and may be removed._
-
-- `\n`: newline (ASCII 10)
-- `\t`: tab (ASCII 9)
-- `\s`: space (ASCII 32)
-- `\\`: backslash (ASCII 92)
-- `\:`: `.` (ASCII 46)
-- `\;`: `,` (ASCII 44)
-- `\#`: `+` (ASCII 43)
-- `\~`: `-` (ASCII 45)
-- `\{`: `<` (ASCII 60)
-- `\}`: `>` (ASCII 62)
-- `\(`: `[` (ASCII 91)
-- `\)`: `]` (ASCII 93)
 
 ## Property Tests
 If the `-p` flag is specified, instead of running the program once and exiting, property tests are run. Each test starts at an assertion, generates random values that match that assertion and runs the program to the next assertion or end of file. Each block of code is tested a number of times.
@@ -54,11 +35,11 @@ The bests method of code reuse in BFStack programs is to abstract the common cod
 ```brainfuck
 move_and_add_1{ [>+<-]>+< }
 ```
-There may not be a space between the tag and the opening curly brace. If there are multiple tagged snippets in a file and snippet checking is enabled, The engine will produce an error if they don't all contain the same code. Only Brainfuck code is checked, not comments, assertions, etc.
+There may not be a space between the tag and the opening curly brace. Snippets are only checked if the `-a` flag is specified. If there are multiple tagged snippets in a file and snippet checking is enabled, The engine will produce an error if they don't all contain the same code. Only Brainfuck code is checked, not comments, assertions, etc.
 
 ## Optimizations
 Sequences of `+`, `-`, `<` and `>` are collapsed down such that the interpreter only has to add one value to each cell changed (even if a single cell is changed multiple times in the sequence). If a loop contains only those four operations, does not contain a net change to the pointer position and the initial cell is decremented by exactly 1, the loop is unrolled into a constant time operation.
 
 With the `-i` flag, you can see how many emulated Brainfuck operations were run (ie how many operations would have been run on a naive interpreter) and how many operations were actually run. Not all of the "real" operations have the same cost, but they are all constant time. The `-0` flag disables all optimizations.
 
-Optimizations can not be made across assertions if enabled. If assertions are not enabled, they do not effect optimization or runtime performance.
+Optimizations can not be made across assertions if enabled. If assertions are not enabled, they do not effect optimization or runtime performance. Tagged snippets never effect optimization or runtime performance.

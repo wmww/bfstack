@@ -17,10 +17,7 @@ def _code_and_snippets(span: Span, args: Args) -> List[Instruction]:
         if c in op_set:
             code.append(Op(c, span[i:i+1]))
         elif args.snippets:
-            if i != 0 and text[i - 1] == '\\':
-                # TODO: drop this when we get rid of escapes
-                pass
-            elif c == '{':
+            if c == '{':
                 name_match = re.search('[a-zA-Z_][a-zA-Z_0-9]*$', text[:i])
                 if name_match is None:
                     raise SingleParseError('Snippet without name', span[i:i+1])
@@ -30,33 +27,7 @@ def _code_and_snippets(span: Span, args: Args) -> List[Instruction]:
                 code.append(SnippetEnd(span[i:i+1]))
     return code
 
-escapes = {
-    'n': '\n',
-    't': '\t',
-    's': ' ',
-    '\\': '\\',
-    ':': '.',
-    ';': ',',
-    '#': '+',
-    '~': '-',
-    '{': '<',
-    '}': '>',
-    '(': '[',
-    ')': ']',
-}
-
 whitespace = set([' ', '\t', '\n'])
-
-def _character_literal(span: Span) -> int:
-    text = span.text()
-    if text.startswith('\\'):
-        if len(text) != 2 or text[1] not in escapes:
-            raise SingleParseError('Invalid escape sequence: "' + text + '"', span)
-        return ord(escapes[text[1]])
-    else:
-        if len(text) > 1 or ord(text) >= 256:
-            raise SingleParseError('Invalid character literal: "' + text + '"', span)
-        return ord(text)
 
 def _matcher(span: Span) -> Matcher:
     text = span.text()
@@ -64,8 +35,6 @@ def _matcher(span: Span) -> Matcher:
         return InverseMatcher(_matcher(span[1:]))
     if text == '*':
         return WildcardMatcher()
-    if text.startswith('@'):
-        return LiteralMatcher(text, _character_literal(span[1:]))
     number_matches = re.findall('^[0-9]+$', text)
     if number_matches:
         value = int(text)
