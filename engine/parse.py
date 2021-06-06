@@ -4,7 +4,6 @@ from op import Op, op_set
 from source_file import SourceFile
 from span import Span
 from args import Args
-import optimize
 from errors import ParseError, MultiParseError, SingleParseError
 
 import re
@@ -169,6 +168,4 @@ def source(source_file: SourceFile, args: Args) -> List[Instruction]:
     _check_loops(code, errors)
     if errors:
         raise MultiParseError(errors)
-    if args.optimize:
-        optimize.optimize(code)
     return code

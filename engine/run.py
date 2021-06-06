@@ -7,6 +7,7 @@ from io_interface import Io
 from assertion import TapeAssertion
 from errors import ProgramError, ParseError, MultiProgramError, OffEdgeOfTestTapeError, UnexpectedSuccessError, MultiUnexpectedSuccessError
 from assertion_ctx import AssertionCtx
+import optimize
 
 import time
 import logging
@@ -94,6 +95,8 @@ def run(args: Args, io: Io) -> None:
         load_start_time = time.time()
         source_file = SourceFile(args)
         code = parse.source(source_file, args)
+        if args.optimize:
+            optimize.optimize(code)
         tape = Tape(0, [], True, False)
         program = Program(tape, code, io)
         program_start_time = time.time()
