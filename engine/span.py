@@ -1,4 +1,5 @@
 from source_file import SourceFile
+from op import op_set
 
 import os
 from typing import Optional
@@ -33,6 +34,9 @@ class Span:
 
     def length(self) -> int:
         return self._end_char - self._start_char
+
+    def ops(self) -> str:
+        return ''.join(c for c in self.text() if c in op_set)
 
     def sub_span(self, start_offset: int, end_offset: int) -> 'Span':
         assert start_offset >= 0, 'Invalid start offset ' + str(start_offset)

@@ -6,6 +6,7 @@ default_test_iters = 24
 class Args:
     def __init__(self):
         self.source_path = None
+        self.snippets = True
         self.assertions = True
         self.show_info = True
         self.optimize = True
@@ -17,6 +18,9 @@ class Args:
         parser = argparse.ArgumentParser(description='Run and/or test a brainfuck program')
         parser.add_argument('source_file', type=str, help='brainfuck source code file to load')
         parser.add_argument(
+            '-s', '--snippets', action='store_true',
+            help='validate that all tagged snippets match')
+        parser.add_argument(
             '-a', '--assertions', action='store_true',
             help='parse and check assertions, see readme for details')
         parser.add_argument(
@@ -26,6 +30,7 @@ class Args:
         parser.add_argument('-0', '--no-optimize', action='store_true', help='don\'t apply any optimizations')
         result = parser.parse_args(argv)
         self.source_path = result.source_file
+        self.snippets = result.snippets
         self.assertions = result.assertions or result.property_test
         self.show_info = result.info
         self.optimize = not result.no_optimize

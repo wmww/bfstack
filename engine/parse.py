@@ -1,4 +1,5 @@
 from instruction import Instruction
+from snippets import SnippetInstr, SnippetStart, SnippetEnd
 from assertion import TapeAssertion, AssertionReset, StartTapeAssertion, TestInput, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
 from op import Op, op_set
 from source_file import SourceFile
@@ -9,11 +10,24 @@ from errors import ParseError, MultiParseError, SingleParseError
 import re
 from typing import List, Set
 
-def _code(span: Span) -> List[Instruction]:
+def _code_and_snippets(span: Span, args: Args) -> List[Instruction]:
     code: List[Instruction] = []
-    for i, c in enumerate(span.text()):
+    text = span.text()
+    for i, c in enumerate(text):
         if c in op_set:
             code.append(Op(c, span[i:i+1]))
+        elif args.snippets:
+            if i != 0 and text[i - 1] == '\\':
+                # TODO: drop this when we get rid of escapes
+                pass
+            elif c == '{':
+                name_match = re.search('[a-zA-Z_][a-zA-Z_0-9]*$', text[:i])
+                if name_match is None:
+                    raise SingleParseError('Snippet without name', span[i:i+1])
+                name = name_match.group(0)
+                code.append(SnippetStart(name, span[i-len(name):i+1]))
+            elif c == '}':
+                code.append(SnippetEnd(span[i:i+1]))
     return code
 
 escapes = {
@@ -117,7 +131,7 @@ def _line(span: Span, args: Args) -> List[Instruction]:
     text = span.text()
     if not text:
         return []
-    code = _code(span)
+    code = _code_and_snippets(span, args)
     if args.assertions and text[0] in ('=', '$'):
         if code:
             raise SingleParseError('Brainfuck code in assertion line', span)

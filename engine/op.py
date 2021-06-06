@@ -1,11 +1,15 @@
-from span import Span
 from instruction import Instruction
 from program import Program
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from span import Span
 
 op_set = set(['+', '-', '<', '>', '[', ']', '.', ','])
 
 class Op(Instruction):
-    def __init__(self, op: str, span: Span):
+    def __init__(self, op: str, span: 'Span'):
         assert op in op_set, 'Invalid operation ' + op
         self._op = op
         self._span = span
@@ -57,5 +61,5 @@ class Op(Instruction):
     def ends_assertion_block(self) -> bool:
         return False
 
-    def span(self) -> Span:
+    def span(self) -> 'Span':
         return self._span

@@ -49,6 +49,13 @@ _NOTE: these are proving not particularly useful and may be removed._
 ## Property Tests
 If the `-p` flag is specified, instead of running the program once and exiting, property tests are run. Each test starts at an assertion, generates random values that match that assertion and runs the program to the next assertion or end of file. Each block of code is tested a number of times.
 
+## Tagged snippets
+The bests method of code reuse in BFStack programs is to abstract the common code into a subroutine, but that's not always the most practical option. If you want to use the same code in multiple places and make sure it stays in sync, you can use a tagged snippet. Tagged snippets start with a tag (Upper and lower case ASCII letters, numbers and underscores only, can not start with a number), followed by a curly brace block. For example:
+```brainfuck
+move_and_add_1{ [>+<-]>+< }
+```
+There may not be a space between the tag and the opening curly brace. If there are multiple tagged snippets in a file and snippet checking is enabled, The engine will produce an error if they don't all contain the same code. Only Brainfuck code is checked, not comments, assertions, etc.
+
 ## Optimizations
 Sequences of `+`, `-`, `<` and `>` are collapsed down such that the interpreter only has to add one value to each cell changed (even if a single cell is changed multiple times in the sequence). If a loop contains only those four operations, does not contain a net change to the pointer position and the initial cell is decremented by exactly 1, the loop is unrolled into a constant time operation.
 
