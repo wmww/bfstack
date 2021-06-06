@@ -10,6 +10,10 @@ from errors import ParseError, MultiParseError, SingleParseError
 import re
 from typing import List, Set
 
+snippet_name = re.compile(r'[a-zA-Z_][a-zA-Z_0-9]*$')
+var_name = re.compile(r'^[a-zA-Z_][a-zA-Z_0-9]*$')
+number = re.compile(r'^[0-9]+$')
+
 def _code_and_snippets(span: Span, args: Args) -> List[Instruction]:
     code: List[Instruction] = []
     text = span.text()
@@ -18,7 +22,7 @@ def _code_and_snippets(span: Span, args: Args) -> List[Instruction]:
             code.append(Op(c, span[i:i+1]))
         elif args.snippets:
             if c == '{':
-                name_match = re.search('[a-zA-Z_][a-zA-Z_0-9]*$', text[:i])
+                name_match = snippet_name.search(text[:i])
                 if name_match is None:
                     raise SingleParseError('Snippet without name', span[i:i+1])
                 name = name_match.group(0)
@@ -35,13 +39,13 @@ def _matcher(span: Span) -> Matcher:
         return InverseMatcher(_matcher(span[1:]))
     if text == '*':
         return WildcardMatcher()
-    number_matches = re.findall('^[0-9]+$', text)
+    number_matches = number.findall(text)
     if number_matches:
         value = int(text)
         if value < 0 or value >= 256:
             raise SingleParseError('Invalid cell value ' + str(value) + ', must be in range 0-255', span)
         return LiteralMatcher(text, int(text))
-    ident_matches = re.findall('^[a-zA-Z_][a-zA-Z_0-9]*$', text)
+    ident_matches = var_name.findall(text)
     if ident_matches:
         return VariableMatcher(text)
     raise SingleParseError('Invalid assertion cell: "' + text + '"', span)
