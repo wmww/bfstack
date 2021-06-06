@@ -10,25 +10,12 @@ class Span:
         self._source = source
         self._start_char = start_char
         self._end_char = end_char
-        self._cached_line: Optional[int] = None
-        self._cached_col: Optional[int] = None
 
     def line(self) -> int:
-        if self._cached_line is None:
-            self._cached_line = 1
-            for c in self._source.contents()[:self._start_char]:
-                if c == '\n':
-                    self._cached_line += 1
-        return self._cached_line
+        return self._source.line_of(self._start_char)
 
     def col(self) -> int:
-        if self._cached_col is None:
-            self._cached_col = 1
-            for c in reversed(self._source.contents()[:self._start_char]):
-                if c == '\n':
-                    break
-                self._cached_col += 1
-        return self._cached_col
+        return self._source.col_of(self._start_char)
 
     def text(self) -> str:
         return self._source.contents()[self._start_char:self._end_char]
@@ -68,11 +55,21 @@ class Span:
     def error_str(self) -> str:
         '''Format in a way suitable for error messages, ends with a newline'''
         result = make_color(Color.FILEPATH, os.path.relpath(self._source.path()) + ':' + str(self.line()) + ':\n')
-        result += self._source.line_text(self.line()) + '\n'
-        if self.length() > 0:
-            result += make_color(Color.ERROR, ' ' * (self.col() - 1) + '^' * self.length() + '\n')
+        start_line = self._source.line_of(self._start_char)
+        end_line = self._source.line_of(self._end_char)
+        if start_line == end_line:
+            result += self._source.line_text(self.line()) + '\n'
+            if self.length() > 0:
+                result += make_color(Color.ERROR, ' ' * (self.col() - 1) + '^' * self.length() + '\n')
+            else:
+                result += make_color(Color.ERROR, ' ' * (self.col() - 1) + '\_[zero-length span]' + '\n')
         else:
-            result += make_color(Color.ERROR, ' ' * (self.col() - 1) + '\_[zero-length span]' + '\n')
+            max_line = 0
+            for i in range(start_line, end_line + 1):
+                text = self._source.line_text(i)
+                max_line = max(max_line, len(text))
+                result += text + '\n'
+            result += make_color(Color.ERROR, '^' * max_line + '\n')
         return result
 
     def extend_to(self, other: 'Span') -> 'Span':
