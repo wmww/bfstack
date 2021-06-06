@@ -1,18 +1,18 @@
 # Framework architecture
-This document will help you understand how the framework works. Unfortanitly with a language like Brainfuck this is probably a requirement for effectivly writing programs in it.
+This document will help you understand how the framework works. Unfortunately with a language like Brainfuck, understanding the framework is a requirement for effectively using it.
 
-## terminology
+## Terminology
 BFStack programs contain the following abstractions:
 - `Module`: A collection of up to 255 numbered subroutines. A library generally takes up one module. A program can contain up to 255 modules. Module 1 is reserved for the standard library (std).
 - `Subroutine`: Like a function. Can invoke other subroutines or invoke itself recursively. Each place where other subroutine are invoked is called a label.
 - `Label`: Named after C goto labels. Subroutines can jump around between labels (this is how loops are written). Labels split up subroutine sections.
 - `Word`: A word contains 4 cells for data, and generally takes up 6 cells on the tape. The stack needs to always be alligned to words, and the two padding cells of each word should never be modified by user code (or should at lease be restored before returning or invoking).
-- `Invocation ID`: Contains a module, subroutine and label. Each are between 1-255 with 0 having special meaning depending on context. When stored in a word, they are in that order with the right-most cell always 0. Can be thought of like a C funciton pointer (except it can specify a specific label within the subroutine).
+- `Invocation ID`: Contains a module, subroutine and label. Each are between 1-255 with 0 having special meaning depending on context. When stored in a word, they are in that order with the right-most cell always 0. Can be thought of like a C function pointer (except it can specify a specific label within the subroutine).
 
 ## The big idea
 A BFStack program can be thought of as one big switch statement inside a loop. Each iteration starts with a invocation ID (the label that is to be jumped to, the subroutine it's in and the module that subroutine is in). The framework runs exactly one subroutine section, then detects what it requested and sets up the next iteration.
 
-At an implementation level this is achieved by copying the module number, and decrementing it once for each module in the program until it hits zero. Whent that happens, we know the module we're at is the one with the desired subroutine. Inside that module we then copy the subroutine ID and decrement that until it hits zero. Same for the label. Once the subroutine section is done the key number is set to zero and no more labels, subroutines or modules are run. The [framework](framework/framework.bf) and [case](framework/case.bf) source code have more details.
+At an implementation level this is achieved by copying the module number, and decrementing it once for each module in the program until it hits zero. When that happens, we know the module we're at is the one with the desired subroutine. Inside that module we then copy the subroutine ID and decrement that until it hits zero. Same for the label. Once the subroutine section is done the key number is set to zero and no more labels, subroutines or modules are run. The [framework](framework/framework.bf) and [case](framework/case.bf) source code have more details.
 
 ## Subroutine-framework interface
 When the program enters a subroutine the tape looks like so (the tape is shown using the BFStack [engine's assertion syntax](engine/readme.md). `` ` `` indicates the current cell. `|`s just hint at the word alignment, and are otherwise not significant):

@@ -1,5 +1,5 @@
 [
-This program was built with BFStak v0.3 (https://github.com/wmww/bfstack)
+This program was built with BFStack v0.3 (https://github.com/wmww/bfstack)
 It should run in any standard Brainfuck environment
 ]
 

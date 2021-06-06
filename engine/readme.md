@@ -1,5 +1,5 @@
 # BFStack Engine
-This is a sub-project of BFStack. It is a Brainfuck interpreter implemented in Python3 that supports features useful for development of the framework itself and programs that use it. BFStack programs should run in any standard Brainfuck environment, but this engine has some bonus features over a standard interpreter (notably, the assertion system).
+This is a sub-project of BFStack. It is a Brainfuck interpreter implemented in Python3 that supports features useful for development of the framework itself and programs that use it. BFStack programs should run in any standard Brainfuck environment, but this engine has some bonus features over a standard interpreter (notably, the assertion and systems).
 
 ## Characteristics
 For now, BFStack Engine only supports 8-bit (0 - 255) cells with standard overflow behavior. It allows an arbitrary number of cells to the right (only constrained by host system memory) and errors if the program attempts to go to the left of the start position. Newlines are ASCII 10. EOF is 0.
@@ -8,17 +8,17 @@ For now, BFStack Engine only supports 8-bit (0 - 255) cells with standard overfl
 All tests are currently integration tests found in the tests directory. `run_engine_tests.py` automatically detects and runs all tests. Tests that end with `_fails` are supposed to fail an assertion or encounter a runtime error (such as going too far left). Since tests are just Brainfuck source files with assertions, they should be portable across implementations (assuming they support the assertion syntax specified below)
 
 ## Assertions
-To aid with development and testing, BFStack uses a custom assertion syntax defined here. The engine will verify all assertions if the `-a` flag is set. This document is the canonical source for the assertion syntax. Assertions are always on their own line (ASCII 10 at the beginning and end) and may not contain any Brainfuck operations.
+To aid in developing and testing Brainfuck programs, we support a custom assertion syntax defined here. The engine will verify all assertions if the `-a` flag is set. This document is the canonical source for the assertion syntax. Assertions are always on their own line (ASCII 10 at the beginning and end) and may not contain any Brainfuck operations.
 
 ### Syntax
 Assertions start with a `=`. Whitespace (ASCII 9 and ASCII 32) may come before the `=`. They are composed of a sequence of whitespace-separated value matchers. Exactly one of the value matchers must be proceeded by a backtick (`\``). This marks the current cell. If all matchers match their corresponding data tape cells, the assertion passes. Otherwise, the assertion fails.
 
-The data pointer must stay within the range of the assertion until the next assertion unless it has a `~` at the start and/or end. The `~` is like a matcher in that it is whitespace separated from the `=` and other matchers, but it can't be combined, be the current cell or be anywhere but the start and end. It indicates the data pointer may leave the assertion reange in that direction, at which point no other checks are made until the next assertion. A special assertion containing only `= ~` and no current cell clears the current assertion.
+The data pointer must stay within the range of the assertion until the next assertion unless it has a `~` at the start and/or end. The `~` is like a matcher in that it is whitespace separated from the `=` and other matchers, but it can't be combined, be the current cell or be anywhere but the start and end. It indicates the data pointer may leave the assertion range in that direction, at which point no other checks are made until the next assertion. A special assertion containing only `= ~` and no current cell clears the current assertion.
 
 A whitespace-separated `|` can be inserted and has no effect. It can be used for indicating layout and whatnot.
 
 ### Test Input
-Lines queueing test input have the same syntax as assertions, except that they start with a `$` and don't have a current cell marker. Test input has no effect if the program is being run interactivly (real user input is __not__ checked against it). If not being run interactivly, matching values are generated and queued up. Random values are chosen if the matcher can match more than one value. All input must be consumed before the end of the program or the next test input line.
+Lines queuing test input have the same syntax as assertions, except that they start with a `$` and don't have a current cell marker. Test input has no effect if the program is being run interactively (real user input is __not__ checked against it). If not being run interactively, matching values are generated and queued up. Random values are chosen if the matcher can match more than one value. All input must be consumed before the end of the program or the next test input line.
 
 ### Matcher Syntax
 Matchers are composable expressions that can either match or not match a number. Whitespace is not allowed within a matcher. Matchers are composed of:
