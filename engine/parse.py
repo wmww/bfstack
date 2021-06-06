@@ -131,10 +131,13 @@ def _line(span: Span, args: Args) -> List[Instruction]:
     else:
         return code
 
-def source(source_file: SourceFile, args: Args) -> List[Instruction]:
-    code: List[Instruction] = []
-    errors: List[ParseError] = []
+def _parse_code_and_assertions(
+    source_file: SourceFile,
+    args: Args,
+    error_accumulator: List[ParseError]
+) -> List[Instruction]:
     span = source_file.span()
+    code: List[Instruction] = []
     if args.assertions:
         # An assertion at the start makes the property tests happy
         code.append(StartTapeAssertion(Span(source_file, 0, 0)))
@@ -142,7 +145,10 @@ def source(source_file: SourceFile, args: Args) -> List[Instruction]:
         try:
             code += _line(sub, args)
         except ParseError as err:
-            errors.append(err)
+            error_accumulator.append(err)
+    return code
+
+def _check_loops(code: List[Instruction], error_accumulator: List[ParseError]):
     loops = []
     for instr in code:
         if instr.loop_level_change() == 1:
@@ -151,11 +157,16 @@ def source(source_file: SourceFile, args: Args) -> List[Instruction]:
             if len(loops):
                 loops.pop(-1)
             else:
-                errors.append(SingleParseError('Unmatched "]"', instr.span()))
+                error_accumulator.append(SingleParseError('Unmatched "]"', instr.span()))
         elif instr.loop_level_change() != 0:
             assert False, 'Invalid value ' + str(instr.loop_level_change()) + ' for loop level change'
     for instr in loops:
-        errors.append(SingleParseError('Unmatched "["', instr.span()))
+        error_accumulator.append(SingleParseError('Unmatched "["', instr.span()))
+
+def source(source_file: SourceFile, args: Args) -> List[Instruction]:
+    errors: List[ParseError] = []
+    code = _parse_code_and_assertions(source_file, args, errors)
+    _check_loops(code, errors)
     if errors:
         raise MultiParseError(errors)
     if args.optimize:
