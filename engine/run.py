@@ -94,7 +94,7 @@ def run(args: Args, io: Io) -> None:
     program = None
     try:
         load_start_time = time.time()
-        source_file = SourceFile(args)
+        source_file = SourceFile(args.source_path)
         code = parse.source(source_file, args)
         if args.snippets:
             code = snippets.process(code)

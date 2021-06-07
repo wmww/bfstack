@@ -1,13 +1,19 @@
+from errors import ParseError
+from colors import make_color, Color
+
 import logging
 
 logger = logging.getLogger(__name__)
 
 class SourceFile:
-    def __init__(self, args):
-        self._path = args.source_path
+    def __init__(self, path: str):
+        self._path = path
         logger.info('Loading ' + self._path)
-        with open(self._path, "r") as f:
-            self._contents = f.read()
+        try:
+            with open(self._path, "r") as f:
+                self._contents = f.read()
+        except FileNotFoundError:
+            raise ParseError('File not found: ' + make_color(Color.ERROR, path))
         self._lines = self._contents.splitlines()
 
     def path(self) -> str:
