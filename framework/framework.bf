@@ -1,6 +1,8 @@
 [
 This program was built with BFStack v0.3 (https://github.com/wmww/bfstack)
 It should run in any standard Brainfuck environment
+
+use "case.bf"
 ]
 
 M: module
@@ -37,17 +39,17 @@ non destructively copy M
 = M S L 0 | `M 0
 
 std(1)
-case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     = M S L 0 | `0 0
     copy_S{ <<<[>>+>+<<<-]>>[<<+>>-]> }
 
     abort(1)
     = M S L 0 | `S 0
-    case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+    case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
         = M S L 0 | `0 0
         copy_L{ <<[>+>+<<-]>[<+>-]> }
         = M S L 0 | `L 0
-        case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+        case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
             = M S L 0 | `0 0 | * * * *
             sub_init{ >+> }
             = M S L 0 | 0 1 | `* * * *
@@ -56,34 +58,34 @@ case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
             = M S L 0 | 0 2 | `*
             sub_finish{ << }
             = M S L 0 | `0 2 |
-        case_end{ ]]<[>+<-]> }
+        case::end{ ]]<[>+<-]> }
         = M S L 0 | `* *
 
         if there's still a value the throw "no such label" (return code 5)
         end_sub{ [>[-]+++++<[-]] }
         = M S L 0 | `0 C
 
-    case_end{ ]]<[>+<-]> }
+    case::end{ ]]<[>+<-]> }
     = M S L 0 | `* *
 
     if there's still a value the throw "no such subroutine" (return code 4)
     end_mod{ [>[-]++++<[-]] }
     = M S L 0 | `0 C
-case_end{ ]]<[>+<-]> }
+case::end{ ]]<[>+<-]> }
 = M S L 0 | `* *
 
 no great way to express that either the switch value is zero or the return code is zero
 = ~
 
-case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     = M S L 0 | `0 0
     copy_S{ <<<[>>+>+<<<-]>>[<<+>>-]> }
     = M S L 0 | `S 0
-    case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+    case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
         = M S L 0 | `0 0
         copy_L{ <<[>+>+<<-]>[<+>-]> }
         = M S L 0 | `L 0
-        case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+        case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
             = M S L 0 | `0 0 | 0 0 0 0
             sub_init{ >+> }
 
@@ -105,10 +107,10 @@ case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
             invoke 2::2
             ++>++>+>>>>
             = 2 2 1 0 | 0 0 | `0
-            invoke {
+            invoke{
                 <<
-                case_end{ ]]<[>+<-]> }
-                case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+                case::end{ ]]<[>+<-]> }
+                case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
                 = ~
                 <<<<[[-]>]>>>
             }
@@ -119,21 +121,21 @@ case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
 
             sub_finish{ << }
             = M S L 0 | `0 1 |
-        case_end{ ]]<[>+<-]> }
+        case::end{ ]]<[>+<-]> }
         = M S L 0 | `* *
 
         if there's still a value the throw "no such label" (return code 5)
         end_sub{ [>[-]+++++<[-]] }
         = M S L 0 | `0 C
 
-    case_end{ ]]<[>+<-]> }
+    case::end{ ]]<[>+<-]> }
     = M S L 0 | `* *
-    case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+    case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
         = ~
         = M S L 0 | `0 0
         copy_L{ <<[>+>+<<-]>[<+>-]> }
         = M S L 0 | `L 0
-        case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+        case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
             = M S L 0 | `0 0 | 0 0 0 0
             sub_init{ >+> }
 
@@ -154,21 +156,21 @@ case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
 
             sub_finish{ << }
             = M S L 0 | `0 1 |
-        case_end{ ]]<[>+<-]> }
+        case::end{ ]]<[>+<-]> }
         = M S L 0 | `* *
 
         if there's still a value the throw "no such label" (return code 5)
         end_sub{ [>[-]+++++<[-]] }
         = M S L 0 | `0 C
 
-    case_end{ ]]<[>+<-]> }
+    case::end{ ]]<[>+<-]> }
     = M S L 0 | `* *
 
     if there's still a value the throw "no such subroutine" (return code 4)
     end_mod{ [>[-]++++<[-]] }
     = M S L 0 | `0 C
 
-case_end{ ]]<[>+<-]> }
+case::end{ ]]<[>+<-]> }
 = M S L 0 | `* *
 
 if there's still a value the throw "no such module" (return code 3)
@@ -180,14 +182,14 @@ switch on C plus 1 (because switches don't handle 0)
 = M S L 0 | `C 0
 +
 
-case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     return code is 0 so invoke a subroutine
     TODO: set the namespace subroutine and/or label to default values if they are null
     = M S L 0 | `0 0
     >+<
     = M S L 0 | `0 1
-case_end{ ]]<[>+<-]> }
-case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+case::end{ ]]<[>+<-]> }
+case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     return code is 1 so return
 
     = M S L 0 | `0 0
@@ -252,8 +254,8 @@ case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     <<<<<<[>>>>>>>>+<<<<<<<<-]
     >>>>>>>>>>>>
     = 0 * | * * * * | 0 * | M S L 0 | `0 1
-case_end{ ]]<[>+<-]> }
-case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+case::end{ ]]<[>+<-]> }
+case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     return code is 2 so abort
     [-][ print "\nDONE\n" ]
     ++++++++++
@@ -276,8 +278,8 @@ case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     ---------.
     [-]
     this will then abort
-case_end{ ]]<[>+<-]> }
-case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+case::end{ ]]<[>+<-]> }
+case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     return code is 3 so no such module
     [-][ print "ERR_BAD_MOD" ]
     ++++++++++
@@ -312,8 +314,8 @@ case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     ----------
     --------.
     [-]
-case_end{ ]]<[>+<-]> }
-case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+case::end{ ]]<[>+<-]> }
+case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     return code is 4 so no such subroutine
     [-][ print "ERR_BAD_SUB\n" ]
     ++++++++++
@@ -348,8 +350,8 @@ case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     ----------
     ------.
     [-]
-case_end{ ]]<[>+<-]> }
-case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+case::end{ ]]<[>+<-]> }
+case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     return code is 5 so no such label
     [-][ print "ERR_BAD_LABEL\n" ]
     ++++++++++
@@ -387,7 +389,7 @@ case_start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     ----------
     ------.
     [-]
-case_end{ ]]<[>+<-]> }
+case::end{ ]]<[>+<-]> }
 [
     = `C_sub_5 0
     >
