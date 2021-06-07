@@ -20,6 +20,9 @@ class Span:
     def text(self) -> str:
         return self._source.contents()[self._start_char:self._end_char]
 
+    def source_file(self) -> SourceFile:
+        return self._source
+
     def length(self) -> int:
         return self._end_char - self._start_char
 

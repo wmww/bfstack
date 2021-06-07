@@ -9,11 +9,8 @@ class SourceFile:
     def __init__(self, path: str):
         self._path = path
         logger.info('Loading ' + self._path)
-        try:
-            with open(self._path, "r") as f:
-                self._contents = f.read()
-        except FileNotFoundError:
-            raise ParseError('File not found: ' + make_color(Color.ERROR, path))
+        with open(self._path, "r") as f:
+            self._contents = f.read()
         self._lines = self._contents.splitlines()
 
     def path(self) -> str:

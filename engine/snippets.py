@@ -2,7 +2,7 @@ from instruction import Instruction
 from errors import ParseError, MultiParseError, SingleParseError
 from span import Span
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Dict
 
 if TYPE_CHECKING:
     from span import Span
@@ -25,9 +25,22 @@ class SnippetInstr(Instruction):
         return self._span
 
 class SnippetStart(SnippetInstr):
-    def __init__(self, name: str, span: 'Span'):
+    def __init__(self, name_components: List[str], span: 'Span'):
+        '''name_components ends with the snippet name, and does not contain any ':'s'''
         super().__init__(span)
-        self.name = name
+        self._name_components = name_components
+        self._can_be_first_instance = len(name_components) == 1
+
+    def clone_with_prefix(self, prefix: str) -> 'SnippetStart':
+        result = SnippetStart([prefix] + self._name_components, self._span)
+        result._can_be_first_instance = self._can_be_first_instance
+        return result
+
+    def can_be_first_instance(self) -> bool:
+        return self._can_be_first_instance
+
+    def name(self) -> str:
+        return '::'.join(self._name_components)
 
 class SnippetEnd(SnippetInstr):
     def __init__(self, span: 'Span'):
@@ -47,31 +60,33 @@ class _Snippet:
             raise SingleParseError(self._name + '{}\'s code does not match first usage', span)
         self._spans.append(span)
 
-class _Validator:
-    def __init__(self):
-        self._db: Dict[str, _Snippet] = {}
-
-    def process(self, code: List[Instruction], error_accumulator: List[ParseError]):
-        stack: List[SnippetStart] = []
-        for instr in code:
-            if isinstance(instr, SnippetStart):
-                if not instr.name in self._db:
-                    self._db[instr.name] = _Snippet(instr.name)
-                stack.append(instr)
-            elif isinstance(instr, SnippetEnd):
-                if len(stack) == 0:
-                    error_accumulator.append(SingleParseError('Unmatched "}"', instr.span()))
+def process(code: List[Instruction], error_accumulator: List[ParseError]) -> list[Instruction]:
+    '''Adds parse errors to the accumulator for unmatching snippets, returns list with snippets removed'''
+    db: Dict[str, _Snippet] = {}
+    stack: List[SnippetStart] = []
+    for instr in code:
+        if isinstance(instr, SnippetStart):
+            start_name = instr.name()
+            if not start_name in db:
+                if instr.can_be_first_instance():
+                    db[start_name] = _Snippet(start_name)
                 else:
-                    start = stack.pop()
-                    try:
-                        self._db[start.name].link(start.span().extend_to(instr.span()))
-                    except SingleParseError as e:
-                        error_accumulator.append(e)
-        for snippet in reversed(stack):
-            error_accumulator.append(SingleParseError('Unmatched "' + snippet.name + '{"', snippet.span()))
-
-def process(code: List[Instruction], error_accumulator: List[ParseError]) -> List[Instruction]:
-    '''Raises a parse error if all snippets do not match, returns list with snippets removed'''
-    validator = _Validator()
-    validator.process(code, error_accumulator)
+                    error_accumulator.append(SingleParseError(
+                        'Unknown snippet "' + start_name + '", known snippets: ' + str(list(db.keys())),
+                        instr.span(),
+                    ))
+            stack.append(instr)
+        elif isinstance(instr, SnippetEnd):
+            if len(stack) == 0:
+                error_accumulator.append(SingleParseError('Unmatched "}"', instr.span()))
+            else:
+                start = stack.pop()
+                try:
+                    db[start.name()].link(start.span().extend_to(instr.span()))
+                except SingleParseError as e:
+                    error_accumulator.append(e)
+                except KeyError:
+                    pass # Can happen when there's an error creating the span
+    for snippet in reversed(stack):
+        error_accumulator.append(SingleParseError('Unmatched "' + snippet.name() + '{"', snippet.span()))
     return [instr for instr in code if not isinstance(instr, SnippetInstr)]

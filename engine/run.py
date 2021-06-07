@@ -7,8 +7,9 @@ from io_interface import Io
 from assertion import TapeAssertion
 from errors import ProgramError, ParseError, MultiProgramError, MultiParseError, OffEdgeOfTestTapeError, UnexpectedSuccessError, MultiUnexpectedSuccessError
 from assertion_ctx import AssertionCtx
-import optimize
+import use_file
 import snippets
+import optimize
 
 import time
 import logging
@@ -98,6 +99,7 @@ def run(args: Args, io: Io) -> None:
         errors: List[ParseError] = []
         code = parse.source(source_file, args, errors)
         if args.snippets:
+            code = use_file.expand(code, args, errors)
             code = snippets.process(code, errors)
         if args.optimize:
             code = optimize.optimize(code)

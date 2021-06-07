@@ -37,6 +37,19 @@ move_and_add_1{ [>+<-]>+< }
 ```
 There may not be a space between the tag and the opening curly brace. Snippets are only checked if the `-a` flag is specified. If there are multiple tagged snippets in a file and snippet checking is enabled, The engine will produce an error if they don't all contain the same code. Only Brainfuck code is checked, not comments, assertions, etc.
 
+## Using snippets from other files
+Snippets from other files can be used as well. First, the file must be imported in the header block. This is a loop that starts at the very start of the program. Since the initial cell always starts at 0, it is guaranteed not to run and so can safely contain Brainfuck instructions.
+
+To use a file:
+```brainfuck
+[
+use "../some/file.bf"
+]
+
+file::snippet{ ... }
+```
+As always, you have to manually fill in the contents of the snippet, but the engine will tell you if it doesn't match. The prefix is always the file name without the extension.
+
 ## Optimizations
 Sequences of `+`, `-`, `<` and `>` are collapsed down such that the interpreter only has to add one value to each cell changed (even if a single cell is changed multiple times in the sequence). If a loop contains only those four operations, does not contain a net change to the pointer position and the initial cell is decremented by exactly 1, the loop is unrolled into a constant time operation.
 

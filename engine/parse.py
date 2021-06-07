@@ -1,5 +1,6 @@
 from instruction import Instruction
 from snippets import SnippetInstr, SnippetStart, SnippetEnd
+from use_file import UseStatement
 from assertion import TapeAssertion, AssertionReset, StartTapeAssertion, TestInput, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
 from op import Op, op_set
 from source_file import SourceFile
@@ -10,9 +11,10 @@ from errors import ParseError, MultiParseError, SingleParseError
 import re
 from typing import List, Set
 
-snippet_name = re.compile(r'[a-zA-Z_][a-zA-Z_0-9]*$')
+snippet_name = re.compile(r'[a-zA-Z_][a-zA-Z_:0-9]*$')
 var_name = re.compile(r'^[a-zA-Z_][a-zA-Z_0-9]*$')
 number = re.compile(r'^[0-9]+$')
+use_statement = re.compile(r'^use\s"(.*)"$')
 
 def _code_and_snippets(span: Span, args: Args) -> List[Instruction]:
     code: List[Instruction] = []
@@ -26,7 +28,12 @@ def _code_and_snippets(span: Span, args: Args) -> List[Instruction]:
                 if name_match is None:
                     raise SingleParseError('Snippet without name', span[i:i+1])
                 name = name_match.group(0)
-                code.append(SnippetStart(name, span[i-len(name):i+1]))
+                name_components = name.split('::')
+                name_span = span[i-len(name):i+1]
+                for component in name_components:
+                    if ':' in component:
+                        raise SingleParseError('Snippet name contains stray ":"', name_span)
+                code.append(SnippetStart(name_components, name_span))
             elif c == '}':
                 code.append(SnippetEnd(span[i:i+1]))
     return code
@@ -105,7 +112,13 @@ def _line(span: Span, args: Args) -> List[Instruction]:
     if not text:
         return []
     code = _code_and_snippets(span, args)
-    if args.assertions and text[0] in ('=', '$'):
+    if args.snippets and text.startswith('use '):
+        match = use_statement.match(text)
+        if match is None:
+            raise SingleParseError('Invalid use statement', span)
+        else:
+            return [UseStatement(match.group(1), span)]
+    elif args.assertions and text[0] in ('=', '$'):
         if code:
             raise SingleParseError('Brainfuck code in assertion line', span)
         if text[0] == '=':
