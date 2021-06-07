@@ -11,6 +11,7 @@ L: label (within subroutine)
 
 = `0 ~
 
+header{
 make plenty of space at the bottom of the stack
 ++++++++++[[>>>+<<<-]>>>-]
 
@@ -35,10 +36,12 @@ start the main loop
 [-]
 non destructively copy M
 <<<<<[>>>+>+<<<<-]>>>[<<<+>>>-]>
+}
 
 = M S L 0 | `M 0
 
 std(1)
+std{
 case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     = M S L 0 | `0 0
     copy_S{ <<<[>>+>+<<<-]>>[<<+>>-]> }
@@ -73,10 +76,12 @@ case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     = M S L 0 | `0 C
 case::end{ ]]<[>+<-]> }
 = M S L 0 | `* *
+}
 
 no great way to express that either the switch value is zero or the return code is zero
 = ~
 
+footer{
 case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     = M S L 0 | `0 0
     copy_S{ <<<[>>+>+<<<-]>>[<<+>>-]> }
@@ -445,3 +450,4 @@ case::end{ ]]<[>+<-]> }
 = M S L 0 | `0 *
 >
 ]
+}
