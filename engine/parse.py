@@ -28,7 +28,7 @@ def _code_and_snippets(span: Span, args: Args, error_accumulator: List[ParseErro
                 if name_match is None:
                     bracket_span = span[i:i+1]
                     error_accumulator.append(SingleParseError('Snippet without name', bracket_span))
-                    code.append(SnippetStart(['[unnamed snippet]'], bracket_span))
+                    code.append(SnippetStart([SnippetStart.UNNAMED_SNIPPET_NAME], bracket_span))
                 else:
                     name = name_match.group(0)
                     name_components = name.split('::')

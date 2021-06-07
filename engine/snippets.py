@@ -25,6 +25,8 @@ class SnippetInstr(Instruction):
         return self._span
 
 class SnippetStart(SnippetInstr):
+    UNNAMED_SNIPPET_NAME = '[unnamed snippet]'
+
     def __init__(self, name_components: List[str], span: 'Span'):
         '''name_components ends with the snippet name, and does not contain any ':'s'''
         super().__init__(span)
@@ -56,7 +58,7 @@ class _Snippet:
         code = span.ops()
         if self._code is None:
             self._code = code
-        elif self._code != code:
+        elif self._code != code and not self._name.endswith(SnippetStart.UNNAMED_SNIPPET_NAME):
             raise SingleParseError(self._name + '{}\'s code does not match first usage', span)
         self._spans.append(span)
 
