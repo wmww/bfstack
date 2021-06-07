@@ -70,11 +70,8 @@ class _Validator:
         for snippet in reversed(stack):
             error_accumulator.append(SingleParseError('Unmatched "' + snippet.name + '{"', snippet.span()))
 
-def process(code: List[Instruction]) -> List[Instruction]:
+def process(code: List[Instruction], error_accumulator: List[ParseError]) -> List[Instruction]:
     '''Raises a parse error if all snippets do not match, returns list with snippets removed'''
-    errors: List[ParseError] = []
     validator = _Validator()
-    validator.process(code, errors)
-    if errors:
-        raise MultiParseError(errors)
+    validator.process(code, error_accumulator)
     return [instr for instr in code if not isinstance(instr, SnippetInstr)]

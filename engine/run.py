@@ -5,7 +5,7 @@ from tape import Tape
 import parse
 from io_interface import Io
 from assertion import TapeAssertion
-from errors import ProgramError, ParseError, MultiProgramError, OffEdgeOfTestTapeError, UnexpectedSuccessError, MultiUnexpectedSuccessError
+from errors import ProgramError, ParseError, MultiProgramError, MultiParseError, OffEdgeOfTestTapeError, UnexpectedSuccessError, MultiUnexpectedSuccessError
 from assertion_ctx import AssertionCtx
 import optimize
 import snippets
@@ -95,11 +95,14 @@ def run(args: Args, io: Io) -> None:
     try:
         load_start_time = time.time()
         source_file = SourceFile(args.source_path)
-        code = parse.source(source_file, args)
+        errors: List[ParseError] = []
+        code = parse.source(source_file, args, errors)
         if args.snippets:
-            code = snippets.process(code)
+            code = snippets.process(code, errors)
         if args.optimize:
             optimize.optimize(code)
+        if errors:
+            raise MultiParseError(errors)
         tape = Tape(0, [], True, False)
         program = Program(tape, code, io)
         program_start_time = time.time()
