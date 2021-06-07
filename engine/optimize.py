@@ -21,7 +21,7 @@ class Block(Instruction):
         return self._code + ' @ ' + str(self._span)
 
     def is_empty(self):
-        return not self._values and self._offset == 0
+        return self._emulated_ops == 0
 
     def add_op(self, op: Instruction) -> bool:
         '''Returns true if the op was successfully added'''
@@ -51,6 +51,7 @@ class Block(Instruction):
         if self._values[self._offset] == 0:
             self._values.pop(self._offset)
 
+        self._code += str(op)
         self._emulated_ops += 1
         if self._span is None:
             self._span = op.span()
@@ -90,23 +91,27 @@ class Block(Instruction):
     def span(self) -> Span:
         return self._span
 
-def optimize(code: List[Instruction]):
+def optimize(code: List[Instruction]) -> List[Instruction]:
     current = Block()
-    i = 0
-    while i < len(code):
-        if current.add_op(code[i]):
-            code.pop(i)
-        elif current.is_empty():
-            i += 1
-        else:
-            code.insert(i, current)
-            current = Block()
-            i += 2
-    code.append(current)
+    result: List[Instruction] = []
+    for instr in code:
+        if not current.add_op(instr):
+            if not current.is_empty():
+                result.append(current)
+                current = Block()
+            result.append(instr)
+    if not current.is_empty():
+        result.append(current)
     i = 1
-    while i < len(code) - 1:
-        if (isinstance(code[i], Block) and code[i - 1] == '[' and code[i + 1] == ']'):
-            if cast(Block, code[i]).try_unroll_loop():
-                code.pop(i + 1)
-                code.pop(i - 1)
+    while i < len(result) - 1:
+        if (
+            isinstance(result[i], Block) and
+            result[i - 1] == '[' and
+            result[i + 1] == ']'
+        ):
+            if cast(Block, result[i]).try_unroll_loop():
+                result.pop(i + 1)
+                result.pop(i - 1)
+                i -= 2
         i += 1
+    return result

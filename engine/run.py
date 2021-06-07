@@ -100,7 +100,7 @@ def run(args: Args, io: Io) -> None:
         if args.snippets:
             code = snippets.process(code, errors)
         if args.optimize:
-            optimize.optimize(code)
+            code = optimize.optimize(code)
         if errors:
             raise MultiParseError(errors)
         tape = Tape(0, [], True, False)
