@@ -70,22 +70,27 @@ class _Expander:
     def expand(self, code: List[Instruction]) -> List[Instruction]:
         result = []
         has_hit_first_op = False
+        is_in_header_comment = False
         header_comment_loop_depth = 0
         for instr in code:
             if isinstance(instr, UseStatement):
-                if header_comment_loop_depth:
+                if is_in_header_comment:
                     result += self.expand_use(instr)
                 else:
                     self._errors.append(SingleParseError('Use outside of header comment', instr.span()))
             else:
                 result.append(instr)
-            if not has_hit_first_op or header_comment_loop_depth:
-                if isinstance(instr, Op):
+            if not has_hit_first_op and isinstance(instr, Op):
+                has_hit_first_op = True
+                if instr == '[':
+                    is_in_header_comment = True
+            if is_in_header_comment and isinstance(instr, Op):
                     if instr == '[':
                         header_comment_loop_depth += 1
                     elif instr == ']':
                         header_comment_loop_depth -= 1
-                    has_hit_first_op = True
+                    if header_comment_loop_depth <= 0:
+                        is_in_header_comment = False
         return result
 
 def expand(code: List[Instruction], args: Args, error_accumulator: List[ParseError]) -> List[Instruction]:
