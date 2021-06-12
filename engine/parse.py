@@ -166,10 +166,12 @@ def source(
 ) -> List[Instruction]:
     span = source_file.span()
     code: List[Instruction] = []
-    if args.assertions:
-        # An assertion at the start makes the property tests happy
-        code.append(StartTapeAssertion(Span(source_file, 0, 0)))
     for sub in _split_on(span, set(['\n'])):
         code += _line(sub, args, error_accumulator)
+    if args.assertions:
+        # Empty assertions at either end make the property tests happy
+        code.insert(0, StartTapeAssertion(Span(source_file, 0, 0)))
+        end_index = len(source_file.contents())
+        code.append(StartTapeAssertion(Span(source_file, end_index, end_index)))
     _check_loops(code, error_accumulator)
     return code
