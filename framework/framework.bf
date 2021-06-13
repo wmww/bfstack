@@ -2,7 +2,15 @@
 This program was built with BFStack v0.3 (https://github.com/wmww/bfstack)
 It should run in any standard Brainfuck environment
 
+use "dispatch.bf"
 use "case.bf"
+
+= ~
+mod_start{ dispatch::mod_start{ [>+<-[[<+>-]>-<]>[<+>-]<[-<<<[>>+>+<<<-]>>[<<+>>-]> } }
+mod_end{ dispatch::mod_end{ [>[-]++++<[-]]]]<[>+<-]> } }
+sub_start{ dispatch::sub_start{ [>+<-[[<+>-]>-<]>[<+>-]<[-<<[>+>+<<-]>[<+>-]>[>+<-[[<+>-]>-<]>[<+>-]<[->+> } }
+invoke{ dispatch::invoke{ <<]]<[>+<-]>[>+<-[[<+>-]>-<]>[<+>-]<[-<<<<[[-]>]>>> } }
+sub_end{ dispatch::sub_end{ <<]]<[>+<-]>[>[-]+++++<[-]]]]<[>+<-]> } }
 ]
 
 M: module
@@ -36,46 +44,20 @@ start the main loop
 [-]
 non destructively copy M
 <<<<<[>>>+>+<<<<-]>>>[<<<+>>>-]>
-}
+}header
 
-= M S L 0 | `M 0
+= M S L 0 | `M 0 | 0 0 0 0
 
-std(1)
 std{
-case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
-    = M S L 0 | `0 0
-    copy_S{ <<<[>>+>+<<<-]>>[<<+>>-]> }
-
-    abort(1)
-    = M S L 0 | `S 0
-    case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
-        = M S L 0 | `0 0
-        copy_L{ <<[>+>+<<-]>[<+>-]> }
-        = M S L 0 | `L 0
-        case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
-            = M S L 0 | `0 0 | * * * *
-            sub_init{ >+> }
-            = M S L 0 | 0 1 | `* * * *
-            set the abort code
-            <+>
-            = M S L 0 | 0 2 | `*
-            sub_finish{ << }
-            = M S L 0 | `0 2 |
-        case::end{ ]]<[>+<-]> }
-        = M S L 0 | `* *
-
-        if there's still a value the throw "no such label" (return code 5)
-        end_sub{ [>[-]+++++<[-]] }
-        = M S L 0 | `0 C
-
-    case::end{ ]]<[>+<-]> }
-    = M S L 0 | `* *
-
-    if there's still a value the throw "no such subroutine" (return code 4)
-    end_mod{ [>[-]++++<[-]] }
-    = M S L 0 | `0 C
-case::end{ ]]<[>+<-]> }
-= M S L 0 | `* *
+module 1(std)
+dispatch::mod_start{ [>+<-[[<+>-]>-<]>[<+>-]<[-<<<[>>+>+<<<-]>>[<<+>>-]> }
+    dispatch::sub_start{ [>+<-[[<+>-]>-<]>[<+>-]<[-<<[>+>+<<-]>[<+>-]>[>+<-[[<+>-]>-<]>[<+>-]<[->+> }
+        = M S L 0 | 0 1 | `* * * *
+        set the abort code
+        <+>
+        = M S L 0 | 0 2 | `*
+    dispatch::sub_end{ <<]]<[>+<-]>[>[-]+++++<[-]]]]<[>+<-]> }
+dispatch::mod_end{ [>[-]++++<[-]]]]<[>+<-]> }
 }
 
 no great way to express that either the switch value is zero or the return code is zero
