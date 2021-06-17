@@ -22,18 +22,18 @@ L: label (within subroutine)
 = M S L 0 | `M 0
 
 mod_start{
-case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+case/start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     = M S L 0 | `0 0
     copy_S{ <<<[>>+>+<<<-]>>[<<+>>-]> }
     }mod_start
 
     sub_start{
     = M S L 0 | `S 0
-    case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+    case/start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
         = M S L 0 | `0 0
         copy_L{ <<[>+>+<<-]>[<+>-]> }
         = M S L 0 | `L 0
-        case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+        case/start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
             = M S L 0 | `0 0 | * * * *
             >+>
             }sub_start
@@ -47,9 +47,9 @@ case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
 
             invoke{
             <<
-        case::end{ ]]<[>+<-]> }
+        case/end{ ]]<[>+<-]> }
         = M S L 0 | `* 0
-        case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+        case/start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
             = ~
             = !0 !0 !0 0 | `0 0 | * * * *
             TODO: make this less dumb
@@ -63,14 +63,14 @@ case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
             sub_end{
             <<
             = M S L 0 | `0 1 |
-        case::end{ ]]<[>+<-]> }
+        case/end{ ]]<[>+<-]> }
         = M S L 0 | `* *
 
         if there's still a value the throw "no such label" (return code 5)
         [>[-]+++++<[-]]
         = M S L 0 | `0 C
 
-    case::end{ ]]<[>+<-]> }
+    case/end{ ]]<[>+<-]> }
     = M S L 0 | `* *
     }sub_end
 
@@ -78,7 +78,7 @@ case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
     if there's still a value the throw "no such subroutine" (return code 4)
     end_mod{ [>[-]++++<[-]] }
     = M S L 0 | `0 C
-case::end{ ]]<[>+<-]> }
+case/end{ ]]<[>+<-]> }
 = M S L 0 | `* *
 }mod_end
 

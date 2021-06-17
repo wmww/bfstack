@@ -48,7 +48,7 @@ To use a file:
 use "../some/file.bf"
 ]
 
-file::snippet{ ... }
+file/snippet{ ... }
 ```
 As always, you have to manually fill in the contents of the snippet, but the engine will tell you if it doesn't match. The prefix is always the file name without the extension.
 
