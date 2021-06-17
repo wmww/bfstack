@@ -9,7 +9,7 @@ from args import Args
 from errors import ParseError, MultiParseError, SingleParseError
 
 import re
-from typing import List, Set
+from typing import List, Set, cast
 
 snippet_name = re.compile(r'[a-zA-Z_][a-zA-Z_:0-9]*$')
 var_name = re.compile(r'^[a-zA-Z_][a-zA-Z_0-9]*$')
@@ -154,8 +154,11 @@ def _line(span: Span, args: Args, error_accumulator: List[ParseError]) -> List[I
     else:
         return code
 
-# TODO: fix loops as well so this doesn't mess up header comments and stuff later
-def _check_loops(code: List[Instruction], error_accumulator: List[ParseError]):
+def _fix_loops(
+    code: List[Instruction],
+    error_accumulator: List[ParseError]
+) -> List[Instruction]:
+    need_opens = 0
     loops = []
     for instr in code:
         if instr.loop_level_change() == 1:
@@ -165,10 +168,18 @@ def _check_loops(code: List[Instruction], error_accumulator: List[ParseError]):
                 loops.pop(-1)
             else:
                 error_accumulator.append(SingleParseError('Unmatched "]"', instr.span()))
+                need_opens += 1
         elif instr.loop_level_change() != 0:
             assert False, 'Invalid value ' + str(instr.loop_level_change()) + ' for loop level change'
+    result = code
+    for i in range(need_opens):
+        result = [cast(Instruction, Op('[', Span(code[0].span().source_file(), 0, 0)))] + result
     for instr in loops:
         error_accumulator.append(SingleParseError('Unmatched "["', instr.span()))
+        source = code[0].span().source_file()
+        end = len(source.contents())
+        result = result + [Op(']', Span(source, end, end))]
+    return result
 
 def source(
     source_file: SourceFile,
@@ -184,5 +195,5 @@ def source(
         code.insert(0, StartTapeAssertion(Span(source_file, 0, 0)))
         end_index = len(source_file.contents())
         code.append(StartTapeAssertion(Span(source_file, end_index, end_index)))
-    _check_loops(code, error_accumulator)
+    code = _fix_loops(code, error_accumulator)
     return code
