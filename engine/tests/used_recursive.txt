@@ -1,0 +1,11 @@
+[
+use "can_use_file_recursive.bf"
+]
+
+foo{
++++[>+<-]
+}
+
+can_use_file_recursive::bar{
+++
+}

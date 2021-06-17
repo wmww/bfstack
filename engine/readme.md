@@ -31,11 +31,13 @@ Matchers are composable expressions that can either match or not match a cell va
 If the `-p` flag is specified, instead of running the program once and exiting, property tests are run. Each test starts at an assertion, generates random values that match that assertion and runs the program to the next assertion or end of file. Each block of code is tested a number of times.
 
 ## Tagged snippets
-The bests method of code reuse in BFStack programs is to abstract the common code into a subroutine, but that's not always the most practical option. If you want to use the same code in multiple places and make sure it stays in sync, you can use a tagged snippet. Tagged snippets start with a tag (Upper and lower case ASCII letters, numbers and underscores only, can not start with a number), followed by a curly brace block. For example:
+The bests method of code reuse in BFStack programs is to abstract the common code into a subroutine, but that's not always a practical option. If you want to use the same code in multiple places and make sure it stays in sync, you can use a tagged snippet. Tagged snippets start with a tag (Upper and lower case ASCII letters, numbers and underscores only, can not start with a number), followed by a curly brace block. For example:
 ```brainfuck
 move_and_add_1{ [>+<-]>+< }
 ```
-There may not be a space between the tag and the opening curly brace. Snippets are only checked if the `-a` flag is specified. If there are multiple tagged snippets in a file and snippet checking is enabled, The engine will produce an error if they don't all contain the same code. Only Brainfuck code is checked, not comments, assertions, etc.
+There may not be a space between the tag and the opening curly brace. Snippets are only checked if the `-a` flag is specified. If there are multiple tagged snippets in a file and snippet checking is enabled, The engine will produce an error if they don't all contain the same code. Only Brainfuck code needs to match, not comments, assertions, etc. Tagged snippets may contain unbalanced Brainfuck loop starts end ends.
+
+Long snippets sometimes have the snippet name after the `}` as well. This is allowed, but not currently checked by the engine.
 
 ## Using snippets from other files
 Snippets from other files can be used as well. First, the file must be imported in the header block. This is a loop that starts at the very start of the program. Since the initial cell always starts at 0, it is guaranteed not to run and so can safely contain Brainfuck instructions.

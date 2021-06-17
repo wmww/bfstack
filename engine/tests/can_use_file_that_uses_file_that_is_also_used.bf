@@ -1,9 +1,12 @@
 [
 use "used_file.txt"
+use "can_use_file.bf"
 ]
 
-bar{
 used_file::foo{
 +++[>+<-]
 }
+
+can_use_file::bar{
++++[>+<-]
 }

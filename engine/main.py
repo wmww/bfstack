@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from args import Args
-from errors import ProgramError, ParseError
+from errors import ProgramError, ParseError, FileLoadingError
 from io_interface import Io
 from run import run
 from colors import make_color, Color
@@ -55,7 +55,7 @@ def main() -> None:
         io = UserIo()
         run(args, io)
         success = True
-    except FileNotFoundError as e:
+    except FileLoadingError as e:
         logger.error(e)
     except ParseError as e:
         logger.error('Syntax error: ' + str(e))

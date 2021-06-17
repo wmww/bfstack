@@ -6,6 +6,10 @@ if TYPE_CHECKING:
     from span import Span
     from tape import Tape
 
+class FileLoadingError(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
 class MultiError:
     def __init__(self, errors: Sequence[Exception]):
         assert errors, 'Empty error list'

@@ -28,15 +28,25 @@ def _code_and_snippets(span: Span, args: Args, error_accumulator: List[ParseErro
                 if name_match is None:
                     bracket_span = span[i:i+1]
                     error_accumulator.append(SingleParseError('Snippet without name', bracket_span))
-                    code.append(SnippetStart([SnippetStart.UNNAMED_SNIPPET_NAME], bracket_span))
+                    code.append(SnippetStart(None, SnippetStart.UNNAMED_SNIPPET_NAME, bracket_span))
                 else:
-                    name = name_match.group(0)
-                    name_components = name.split('::')
-                    name_span = span[i-len(name):i+1]
+                    prefix_name = name_match.group(0)
+                    name_components = prefix_name.split('::')
+                    name_span = span[i-len(prefix_name):i+1]
+                    if len(name_components) > 2:
+                        error_accumulator.append(SingleParseError(
+                            'Snippet may only have one prefix',
+                            name_span
+                        ))
                     for component in name_components:
                         if ':' in component:
-                            error_accumulator.append(SingleParseError('Snippet name contains stray ":"', name_span))
-                    code.append(SnippetStart(name_components, name_span))
+                            error_accumulator.append(SingleParseError(
+                                'Snippet name contains stray ":"',
+                                name_span
+                            ))
+                    name = name_components[-1]
+                    prefix = name_components[-2] if len(name_components) > 1 else None
+                    code.append(SnippetStart(prefix, name, name_span))
             elif c == '}':
                 code.append(SnippetEnd(span[i:i+1]))
     return code
@@ -144,6 +154,7 @@ def _line(span: Span, args: Args, error_accumulator: List[ParseError]) -> List[I
     else:
         return code
 
+# TODO: fix loops as well so this doesn't mess up header comments and stuff later
 def _check_loops(code: List[Instruction], error_accumulator: List[ParseError]):
     loops = []
     for instr in code:

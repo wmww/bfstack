@@ -1,8 +1,9 @@
 from instruction import Instruction
 from errors import ParseError, MultiParseError, SingleParseError
 from span import Span
+from source_file import SourceFile
 
-from typing import TYPE_CHECKING, List, Optional, Dict
+from typing import TYPE_CHECKING, List, Optional, Dict, Tuple
 
 if TYPE_CHECKING:
     from span import Span
@@ -27,68 +28,128 @@ class SnippetInstr(Instruction):
 class SnippetStart(SnippetInstr):
     UNNAMED_SNIPPET_NAME = '[unnamed snippet]'
 
-    def __init__(self, name_components: List[str], span: 'Span'):
-        '''name_components ends with the snippet name, and does not contain any ':'s'''
+    def __init__(self, prefix: Optional[str], name: str, span: 'Span'):
         super().__init__(span)
-        self._name_components = name_components
-        self._can_be_first_instance = len(name_components) == 1
+        self._prefix = prefix
+        self._name = name
 
-    def clone_with_prefix(self, prefix: str) -> 'SnippetStart':
-        result = SnippetStart([prefix] + self._name_components, self._span)
-        result._can_be_first_instance = self._can_be_first_instance
-        return result
-
-    def can_be_first_instance(self) -> bool:
-        return self._can_be_first_instance
+    def prefix(self) -> Optional[str]:
+        return self._prefix
 
     def name(self) -> str:
-        return '::'.join(self._name_components)
+        return self._name
+
+    def prefix_name(self) -> str:
+        result = ''
+        if self._prefix is not None:
+            result += self._prefix + '::'
+        result += self._name
+        return result
 
 class SnippetEnd(SnippetInstr):
     def __init__(self, span: 'Span'):
         super().__init__(span)
 
 class _Snippet:
-    def __init__(self, name: str):
-        self._name = name
-        self._spans: List[Span] = []
-        self._code: Optional[str] = None
+    def __init__(self, start: SnippetStart, end: SnippetEnd):
+        self.start = start
+        self.end = end
 
-    def link(self, span: Span):
-        code = span.ops()
-        if self._code is None:
-            self._code = code
-        elif self._code != code and not self._name.endswith(SnippetStart.UNNAMED_SNIPPET_NAME):
-            raise SingleParseError(self._name + '{}\'s code does not match first usage', span)
-        self._spans.append(span)
+    def can_be_declaration(self) -> bool:
+        # Snippets with an explicit prefix can not be declarations
+        return self.start.prefix() is None
 
-def process(code: List[Instruction], error_accumulator: List[ParseError]) -> list[Instruction]:
-    '''Adds parse errors to the accumulator for unmatching snippets, returns list with snippets removed'''
-    db: Dict[str, _Snippet] = {}
-    stack: List[SnippetStart] = []
+    def key(self) -> Tuple[SourceFile, str]:
+        start_source = self.start.span().source_file()
+        prefix = self.start.prefix()
+        if prefix is None:
+            return start_source, self.start.name()
+        else:
+            used_source = start_source.get_used_file(prefix)
+            if used_source is None:
+                raise SingleParseError(
+                    prefix + ' does not refer to an explicitly used file ',
+                    self.start.span()
+                )
+            return used_source, self.start.name()
+
+    def span(self) -> Span:
+        return self.start.span().extend_to(self.end.span())
+
+    def ops(self) -> str:
+        '''returns the contained brainfuck operations represented in a string'''
+        return self.span().ops()
+
+    def check_against(self, other: '_Snippet', error_accumulator: List[ParseError]):
+        assert self.key() == other.key()
+        name = self.start.name()
+        if name != SnippetStart.UNNAMED_SNIPPET_NAME and self.ops() != other.ops():
+            error_accumulator.append(SingleParseError(
+                name + '{}\'s code does not match initial usage at ' + str(other.span()),
+                self.span()
+            ))
+
+class _Ctx:
+    def __init__(
+        self,
+        snippets: List[_Snippet],
+        error_accumulator: List[ParseError]
+    ):
+        self.snippets = snippets
+        self.errors = error_accumulator
+        # maps declaration source files and names to snippets
+        self.declarations: Dict[Tuple[SourceFile, str], _Snippet] = dict()
+
+    def process_declarations(self) -> None:
+        for snippet in self.snippets:
+            try:
+                if snippet.can_be_declaration():
+                    key = snippet.key()
+                    if key not in self.declarations:
+                        self.declarations[key] = snippet
+            except ParseError as e:
+                self.errors.append(e)
+
+    def process_usages(self) -> None:
+        for snippet in self.snippets:
+            try:
+                declaration = self.declarations.get(snippet.key())
+                if declaration is None:
+                    self.errors.append(SingleParseError(
+                        'Unknown snippet ' + snippet.start.prefix_name() + '{}',
+                        snippet.start.span(),
+                    ))
+                else:
+                    snippet.check_against(declaration, self.errors)
+            except ParseError as e:
+                self.errors.append(e)
+
+def _parse_snippets(
+    code: List[Instruction],
+    error_accumulator: List[ParseError]
+) -> List[_Snippet]:
+    stack = []
+    result = []
     for instr in code:
         if isinstance(instr, SnippetStart):
-            start_name = instr.name()
-            if not start_name in db:
-                if instr.can_be_first_instance():
-                    db[start_name] = _Snippet(start_name)
-                else:
-                    error_accumulator.append(SingleParseError(
-                        'Unknown snippet "' + start_name + '", known snippets: ' + str(list(db.keys())),
-                        instr.span(),
-                    ))
             stack.append(instr)
         elif isinstance(instr, SnippetEnd):
             if len(stack) == 0:
                 error_accumulator.append(SingleParseError('Unmatched "}"', instr.span()))
             else:
                 start = stack.pop()
-                try:
-                    db[start.name()].link(start.span().extend_to(instr.span()))
-                except SingleParseError as e:
-                    error_accumulator.append(e)
-                except KeyError:
-                    pass # Can happen when there's an error creating the span
-    for snippet in reversed(stack):
+                result.append(_Snippet(start, instr))
+    for snippet in stack:
         error_accumulator.append(SingleParseError('Unmatched "' + snippet.name() + '{"', snippet.span()))
+    return result
+
+def _filter_snippet_instructions(code: List[Instruction]) -> List[Instruction]:
     return [instr for instr in code if not isinstance(instr, SnippetInstr)]
+
+def process(code: List[Instruction], error_accumulator: List[ParseError]) -> list[Instruction]:
+    '''Adds parse errors to the accumulator for unmatching snippets, returns list with snippets removed'''
+    snippets = _parse_snippets(code, error_accumulator)
+    ctx = _Ctx(snippets, error_accumulator)
+    ctx.process_declarations()
+    ctx.process_usages()
+    return _filter_snippet_instructions(code)

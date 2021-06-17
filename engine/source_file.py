@@ -1,7 +1,9 @@
-from errors import ParseError
+from errors import FileLoadingError
 from colors import make_color, Color
 
 import logging
+import os
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -9,9 +11,21 @@ class SourceFile:
     def __init__(self, path: str):
         self._path = path
         logger.info('Loading ' + self._path)
-        with open(self._path, "r") as f:
-            self._contents = f.read()
+        try:
+            with open(self._path, "r") as f:
+                self._contents = f.read()
+        except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
+            raise FileLoadingError(str(e))
         self._lines = self._contents.splitlines()
+        self._used_files: Dict[str, SourceFile] = dict()
+
+    def add_used_file(self, name: str, source: 'SourceFile'):
+        if name in self._used_files:
+            raise FileLoadingError(name + ' used multiple times')
+        self._used_files[name] = source
+
+    def get_used_file(self, name: str) -> 'Optional[SourceFile]':
+        return self._used_files.get(name)
 
     def path(self) -> str:
         return self._path
