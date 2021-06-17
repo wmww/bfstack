@@ -42,7 +42,7 @@ class SnippetStart(SnippetInstr):
     def prefix_name(self) -> str:
         result = ''
         if self._prefix is not None:
-            result += self._prefix + '::'
+            result += self._prefix + '/'
         result += self._name
         return result
 

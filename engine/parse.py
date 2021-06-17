@@ -11,7 +11,7 @@ from errors import ParseError, MultiParseError, SingleParseError
 import re
 from typing import List, Set, cast
 
-snippet_name = re.compile(r'[a-zA-Z_][a-zA-Z_:0-9]*$')
+snippet_name = re.compile(r'[^\s\+\-\<\>\,\.\[\]]+$')
 var_name = re.compile(r'^[a-zA-Z_][a-zA-Z_0-9]*$')
 number = re.compile(r'^[0-9]+$')
 use_statement = re.compile(r'^use\s"(.*)"$')
@@ -31,19 +31,13 @@ def _code_and_snippets(span: Span, args: Args, error_accumulator: List[ParseErro
                     code.append(SnippetStart(None, SnippetStart.UNNAMED_SNIPPET_NAME, bracket_span))
                 else:
                     prefix_name = name_match.group(0)
-                    name_components = prefix_name.split('::')
+                    name_components = prefix_name.split('/')
                     name_span = span[i-len(prefix_name):i+1]
                     if len(name_components) > 2:
                         error_accumulator.append(SingleParseError(
                             'Snippet may only have one prefix',
                             name_span
                         ))
-                    for component in name_components:
-                        if ':' in component:
-                            error_accumulator.append(SingleParseError(
-                                'Snippet name contains stray ":"',
-                                name_span
-                            ))
                     name = name_components[-1]
                     prefix = name_components[-2] if len(name_components) > 1 else None
                     code.append(SnippetStart(prefix, name, name_span))

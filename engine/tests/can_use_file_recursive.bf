@@ -2,7 +2,7 @@
 use "used_recursive.txt"
 ]
 
-used_recursive::foo{
+used_recursive/foo{
 +++[>+<-]
 }
 

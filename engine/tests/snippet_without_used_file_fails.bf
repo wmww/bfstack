@@ -1,6 +1,6 @@
 [
 ]
 
-used_file::foo{
+used_file/foo{
 +++[>+<-]
 }

@@ -6,6 +6,6 @@ foo{
 +++[>+<-]
 }
 
-can_use_file_recursive::bar{
+can_use_file_recursive/bar{
 ++
 }

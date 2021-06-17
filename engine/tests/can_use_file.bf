@@ -3,7 +3,7 @@ use "used_file.txt"
 ]
 
 bar{
-used_file::foo{
+used_file/foo{
 +++[>+<-]
 }
 }

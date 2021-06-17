@@ -2,6 +2,6 @@
 use "used_file.txt"
 ]
 
-used_file::fkdjflksdajfds{
+used_file/fkdjflksdajfds{
 +++[>+<-]
 }
