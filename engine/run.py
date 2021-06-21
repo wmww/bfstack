@@ -6,7 +6,7 @@ import parse
 from io_interface import Io
 from assertion import TapeAssertion
 from errors import ProgramError, ParseError, MultiProgramError, MultiParseError, OffEdgeOfTestTapeError, UnexpectedSuccessError, MultiUnexpectedSuccessError
-from assertion_ctx import AssertionCtx
+from assertion_ctx import AssertionCtx, AssertionCtxIo
 import use_file
 import snippets
 import optimize
@@ -23,8 +23,8 @@ def property_test_iteration(program: Program, start_code_index: int, seed: str):
     ctx = AssertionCtx(seed)
     program.tape = assertion.random_matching_tape(ctx)
     program.current = start_code_index - 1
-    program.io.reset()
     program.assertion_ctx = ctx
+    program.io = AssertionCtxIo(ctx)
     try:
         max_iters = 10000
         current_iter = 0
@@ -55,7 +55,6 @@ def run_property_tests(args: Args, program: Program):
                 try:
                     seed = str(assertion_count) + ',' + str(i)
                     property_test_iteration(program, index, seed)
-                    program.io.reset()
                     an_iteration_succeeded = True
                     if args.expect_fail:
                         assertion = cast(TapeAssertion, program.code[index])
@@ -113,7 +112,6 @@ def run(args: Args, io: Io) -> None:
             run_property_tests(args, cast(Program, program))
         else:
             run_normally(cast(Program, program))
-        io.reset()
     except (ProgramError, ParseError) as e:
         if args.expect_fail:
             return

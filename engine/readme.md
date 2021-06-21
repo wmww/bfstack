@@ -17,9 +17,6 @@ The data pointer must stay within the range of the assertion until the next asse
 
 A whitespace-separated `|` can be inserted and has no effect. It can be used for indicating layout and whatnot.
 
-### Test Input
-Lines queuing test input have the same syntax as assertions, except that they start with a `$` and don't have a current cell marker. Test input has no effect if the program is being run interactively (real user input is __not__ checked against it). If not being run interactively, matching values are generated and queued up. Random values are chosen if the matcher can match more than one value. All input must be consumed before the end of the program or the next test input line.
-
 ### Matcher Syntax
 Matchers are composable expressions that can either match or not match a cell value. Whitespace is not allowed within a matcher. Matchers are composed of:
 - `0`, `1`, `48`, etc: value literals match only their exact value.
@@ -28,7 +25,7 @@ Matchers are composable expressions that can either match or not match a cell va
 - `!`: inverses the following matcher (only matches if it does not match). Can not be applied to an unbound variable.
 
 ## Property Tests
-If the `-t` flag is specified, instead of running the program once and exiting, tests are run. Each test starts at an assertion, generates random values that match that assertion and runs the program to the next assertion or end of file. Each block of code is tested a number of times.
+If the `-t` flag is specified, instead of running the program once and exiting, tests are run. Each test starts at an assertion, generates random values that match that assertion and runs the program to the next assertion or end of file. Any requested user input is also randomly generated. Each block of code is tested a number of times.
 
 ## Tagged snippets
 The bests method of code reuse in BFStack programs is to abstract the common code into a subroutine, but that's not always a practical option. If you want to use the same code in multiple places and make sure it stays in sync, you can use a tagged snippet. Tagged snippets start with a tag, followed by a curly brace block. For example:

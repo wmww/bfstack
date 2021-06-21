@@ -27,11 +27,5 @@ class UserIo(Io):
             self.input_time += end_time - start_time
         return self.input_buffer.pop(0)
 
-    def queue_input(self, values: List[int]):
-        pass
-
     def time_waiting_for_input(self) -> float:
         return self.input_time
-
-    def reset(self):
-        pass

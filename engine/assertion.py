@@ -246,28 +246,3 @@ class StartTapeAssertion(TapeAssertion):
 
     def random_matching_tape(self, ctx: AssertionCtx) -> Tape:
         return Tape(0, [], True, False)
-
-class TestInput(Instruction):
-    def __init__(self, matchers: Sequence[Matcher], span: Span):
-        self._matchers = matchers
-        self._span = span
-
-    def __str__(self):
-        return '$ ' + ' '.join(str(m) for m in self._matchers)
-
-    def run(self, program: Program):
-        program.real_ops += 1
-        values: List[int] = []
-        for m in self._matchers:
-            values.append(m.random_matching(program.assertion_ctx))
-        program.real_ops += len(values)
-        program.io.queue_input(values)
-
-    def loop_level_change(self) -> int:
-        return 0
-
-    def ends_assertion_block(self) -> bool:
-        return False
-
-    def span(self) -> Span:
-        return self._span

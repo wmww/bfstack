@@ -1,7 +1,7 @@
 from instruction import Instruction
 from snippets import SnippetInstr, SnippetStart, SnippetEnd
 from use_file import UseStatement
-from assertion import TapeAssertion, AssertionReset, StartTapeAssertion, TestInput, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
+from assertion import TapeAssertion, AssertionReset, StartTapeAssertion, Matcher, LiteralMatcher, VariableMatcher, WildcardMatcher, InverseMatcher
 from op import Op, op_set
 from source_file import SourceFile
 from span import Span
@@ -115,13 +115,6 @@ def _tape_assertion(span: Span, error_accumulator: List[ParseError]) -> Instruct
     else:
         return TapeAssertion(cells, slide_left, slide_right, offset_of_current, span)
 
-def _test_input(span: Span, error_accumulator: List[ParseError]) -> TestInput:
-    matcher_spans = _split_on(span, whitespace)
-    matchers: List[Matcher] = []
-    for matcher_span in matcher_spans[1:]:
-        matchers.append(_matcher(matcher_span, error_accumulator))
-    return TestInput(matchers, span)
-
 def _line(span: Span, args: Args, error_accumulator: List[ParseError]) -> List[Instruction]:
     span = span.strip()
     text = span.text()
@@ -135,16 +128,12 @@ def _line(span: Span, args: Args, error_accumulator: List[ParseError]) -> List[I
             return code
         else:
             return [UseStatement(match.group(1), span)]
-    elif args.assertions and text[0] in ('=', '$'):
+    elif args.assertions and text[0] == '=':
         if code:
             error_accumulator.append(SingleParseError('Brainfuck code in assertion line', span))
             return code
-        if text[0] == '=':
-            return [_tape_assertion(span, error_accumulator)]
-        elif text[0] == '$':
-            return [_test_input(span, error_accumulator)]
         else:
-            assert False, 'unreachable'
+            return [_tape_assertion(span, error_accumulator)]
     else:
         return code
 

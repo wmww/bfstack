@@ -14,32 +14,14 @@ import subprocess
 from shutil import which
 
 class TestIo(Io):
-    def __init__(self):
-        self.queue: List[int] = []
-
     def push_output(self, value: int):
         pass
 
     def pull_input(self) -> int:
-        if self.queue:
-            return self.queue.pop(0)
-        else:
-            raise TestError('Input requested without test input being queued')
-
-    def queue_input(self, values: List[int]):
-        if self.queue:
-            raise TestError('Test input given with ' + str(len(self.queue)) + ' unconsumed inputs')
-        else:
-            self.queue = values
+        return ord('a')
 
     def time_waiting_for_input(self) -> float:
         return 0.0
-
-    def reset(self):
-        old_queue = self.queue
-        self.queue = []
-        if old_queue:
-            raise TestError('Program finalized with ' + str(len(old_queue)) + ' unconsumed test inputs')
 
 def run_test_code(self, source_path: str, expect_fail: bool):
     args = Args()
