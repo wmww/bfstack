@@ -18,28 +18,43 @@ class Args:
         parser = argparse.ArgumentParser(description='Run and/or test a brainfuck program')
         parser.add_argument('source_file', type=str, help='brainfuck source code file to load')
         parser.add_argument(
-            '-s', '--snippets', action='store_true',
-            help='validate that all tagged snippets match')
+            '-r', '--run-only', action='store_true',
+            help='just run Brainfuck code without any syntax extensions (equivalent to -SA)')
         parser.add_argument(
-            '-a', '--assertions', action='store_true',
-            help='parse and check assertions, see readme for details')
-        parser.add_argument(
-            '-p', '--property-test', action='store_true',
+            '-t', '--test', action='store_true',
             help='run each assertion block independently with random values')
-        parser.add_argument('-i', '--info', action='store_true', help='show stats and other debugging info')
-        parser.add_argument('-0', '--no-optimize', action='store_true', help='don\'t apply any optimizations')
-        parser.add_argument('-c', '--color', action='store_true', help='force enable terminal colors')
-        parser.add_argument('-C', '--no-color', action='store_true', help='force disable terminal colors')
+        parser.add_argument(
+            '-i', '--info', action='store_true',
+            help='show stats and other debugging info')
+        parser.add_argument(
+            '-S', '--no-snippets', action='store_true',
+            help='disable tagged snippet checking, see readme for details. ' +
+                 'No runtime perf cost after initial parse')
+        parser.add_argument(
+            '-A', '--no-assertions', action='store_true',
+            help='disable assertion checking, see readme for details. May have runtime perf cost')
+        parser.add_argument(
+            '-0', '--no-optimize', action='store_true',
+            help='don\'t apply any optimizations')
+        parser.add_argument(
+            '-c', '--color', action='store_true',
+            help='force enable terminal colors')
+        parser.add_argument(
+            '-C', '--no-color', action='store_true',
+            help='force disable terminal colors')
         result = parser.parse_args(argv)
         self.source_path = result.source_file
-        self.snippets = result.snippets
-        self.assertions = result.assertions or result.property_test
+        self.snippets = not (result.no_snippets or result.run_only)
+        self.assertions = not (result.no_assertions or result.run_only)
         self.show_info = result.info
         self.optimize = not result.no_optimize
-        self.prop_tests = result.property_test
+        self.prop_tests = result.test
 
         import colors
         if result.color:
             colors.use_color = True
         if result.no_color:
             colors.use_color = False
+
+        if self.prop_tests and not self.assertions:
+            raise RuntimeError('assertions must be enabled in order to run tests')

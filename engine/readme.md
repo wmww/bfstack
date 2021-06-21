@@ -8,7 +8,7 @@ For now, BFStack Engine only supports 8-bit (0 - 255) cells with standard overfl
 All tests are currently integration tests found in the tests directory. `run_engine_tests.py` automatically detects and runs all tests. Tests that end with `_fails` are supposed to fail an assertion or encounter a runtime error (such as going too far left). Since tests are just Brainfuck source files with assertions, they should be portable across implementations (assuming they support the assertion syntax specified below)
 
 ## Assertions
-To aid in developing and testing Brainfuck programs, we support a custom assertion syntax defined here. The engine will verify all assertions if the `-a` flag is set. This document is the canonical source for the assertion syntax. Assertions are always on their own line (ASCII 10 at the beginning and end) and may not contain any Brainfuck operations.
+To aid in developing and testing Brainfuck programs, we support a custom assertion syntax defined here. The engine verifies all assertions by default. This document is the canonical source for the assertion syntax. Assertions are always on their own line (ASCII 10 at the beginning and end) and may not contain any Brainfuck operations.
 
 ### Syntax
 Assertions start with a `=`. Whitespace (ASCII 9 and ASCII 32) may come before the `=`. They are composed of a sequence of whitespace-separated value matchers. Exactly one of the value matchers must be proceeded by a backtick (`\``). This marks the current cell. If all matchers match their corresponding data tape cells, the assertion passes. Otherwise, the assertion fails.
@@ -28,14 +28,14 @@ Matchers are composable expressions that can either match or not match a cell va
 - `!`: inverses the following matcher (only matches if it does not match). Can not be applied to an unbound variable.
 
 ## Property Tests
-If the `-p` flag is specified, instead of running the program once and exiting, property tests are run. Each test starts at an assertion, generates random values that match that assertion and runs the program to the next assertion or end of file. Each block of code is tested a number of times.
+If the `-t` flag is specified, instead of running the program once and exiting, tests are run. Each test starts at an assertion, generates random values that match that assertion and runs the program to the next assertion or end of file. Each block of code is tested a number of times.
 
 ## Tagged snippets
 The bests method of code reuse in BFStack programs is to abstract the common code into a subroutine, but that's not always a practical option. If you want to use the same code in multiple places and make sure it stays in sync, you can use a tagged snippet. Tagged snippets start with a tag, followed by a curly brace block. For example:
 ```brainfuck
 move_and_add_1{ [>+<-]>+< }
 ```
-Tags may contain any characters other than whitespace and brainfuck operations. There may not be a space between the tag and the opening curly brace. Snippets are only checked if the `-a` flag is specified. If there are multiple tagged snippets in a file and snippet checking is enabled, The engine will produce an error if they don't all contain the same code. Only Brainfuck code needs to match, not comments, assertions, etc. Tagged snippets may contain unbalanced Brainfuck loop starts end ends.
+Tags may contain any characters other than whitespace and brainfuck operations. There may not be a space between the tag and the opening curly brace. If there are multiple snippets in a file with the same tag and snippet checking is enabled, The engine will produce an error if they don't all contain the same code. Only Brainfuck code needs to match, not comments, assertions, etc. Tagged snippets may contain unbalanced Brainfuck loop starts end ends.
 
 Long snippets sometimes have the snippet name after the `}` as well. This is allowed, but not currently checked by the engine.
 

@@ -47,7 +47,11 @@ class UserIo(Io):
 
 def main() -> None:
     args = Args()
-    args.parse(sys.argv[1:]) # strip off the first argument (program name)
+    try:
+        args.parse(sys.argv[1:]) # strip off the first argument (program name)
+    except RuntimeError as e:
+        logger.error('Error: ' + str(e))
+        exit(1)
     if args.show_info:
         logging.basicConfig(level=logging.INFO)
     success = False
