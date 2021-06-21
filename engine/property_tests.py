@@ -3,6 +3,7 @@ from program import Program
 from assertion import TapeAssertion
 from errors import ProgramError, MultiProgramError, MultiParseError, OffEdgeOfTestTapeError, UnexpectedSuccessError, MultiUnexpectedSuccessError
 from assertion_ctx import AssertionCtx, AssertionCtxIo
+from colors import make_color, Color
 
 import logging
 from typing import cast, List
@@ -35,9 +36,11 @@ def _property_test_iteration(program: Program, start_code_index: int, seed: str)
         pass # this is expected, the test is now over
 
 def run_property_tests(args: Args, program: Program):
-    logger.info('Testing program')
+    io = program.io
+    io.print('Running property tests…')
     errors: List[Exception] = []
     assertion_count = 0
+    passes_iterations = 0
     some_assertions_always_fails = False
     for index, instr in enumerate(program.code):
         if isinstance(instr, TapeAssertion):
@@ -48,6 +51,7 @@ def run_property_tests(args: Args, program: Program):
                     seed = str(assertion_count) + ',' + str(i)
                     _property_test_iteration(program, index, seed)
                     an_iteration_succeeded = True
+                    passes_iterations += 1
                     if args.expect_fail:
                         assertion = cast(TapeAssertion, program.code[index])
                         start_tape = assertion.random_matching_tape(AssertionCtx(seed))
@@ -75,3 +79,10 @@ def run_property_tests(args: Args, program: Program):
             raise UnexpectedSuccessError('Property tests succeeded unexpectedly')
     elif errors:
         raise MultiProgramError(errors)
+    else:
+        io.print(make_color(Color.GOOD,
+            'All ' +
+            str(passes_iterations) +
+            ' test iterations from ' +
+            str(assertion_count) +
+            ' assertions passed'))

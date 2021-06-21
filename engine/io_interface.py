@@ -1,6 +1,9 @@
 from typing import List
 
 class Io:
+    def print(self, message: str):
+        raise NotImplementedError()
+
     def push_output(self, value: int):
         raise NotImplementedError()
 

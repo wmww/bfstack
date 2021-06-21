@@ -31,6 +31,9 @@ class AssertionCtxIo(Io):
     def __init__(self, ctx: AssertionCtx):
         self.ctx = ctx
 
+    def print(self, message: str):
+        pass
+
     def push_output(self, value: int):
         pass
 

@@ -14,6 +14,9 @@ import subprocess
 from shutil import which
 
 class TestIo(Io):
+    def print(self, message: str):
+        pass
+
     def push_output(self, value: int):
         pass
 

@@ -13,6 +13,9 @@ class UserIo(Io):
         else:
             self.input_prompt = ''
 
+    def print(self, message: str):
+        print(message)
+
     def push_output(self, value: int):
         print(chr(value), end='', flush=True)
 
