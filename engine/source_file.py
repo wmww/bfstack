@@ -8,8 +8,9 @@ from typing import Dict, Optional
 logger = logging.getLogger(__name__)
 
 class SourceFile:
-    def __init__(self, path: str):
+    def __init__(self, path: str, is_used: bool):
         self._path = path
+        self._is_used = is_used
         logger.info('Loading ' + self._path)
         try:
             with open(self._path, "r") as f:
@@ -18,6 +19,9 @@ class SourceFile:
             raise FileLoadingError(str(e))
         self._lines = self._contents.splitlines()
         self._used_files: Dict[str, SourceFile] = dict()
+
+    def is_used(self) -> bool:
+        return self._is_used
 
     def add_used_file(self, name: str, source: 'SourceFile'):
         if name in self._used_files:

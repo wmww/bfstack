@@ -50,7 +50,7 @@ class _Ctx:
         if canonical_path in self._files:
             return False, self._files[canonical_path]
         else:
-            source = SourceFile(path)
+            source = SourceFile(path, True)
             self._files[canonical_path] = source
             return True, source
 

@@ -1,6 +1,7 @@
 from instruction import Instruction
 from errors import ParseError, MultiParseError, SingleParseError
 from span import Span
+from args import Args
 from source_file import SourceFile
 
 from typing import TYPE_CHECKING, List, Optional, Dict, Tuple
@@ -93,9 +94,11 @@ class _Ctx:
     def __init__(
         self,
         snippets: List[_Snippet],
+        args: Args,
         error_accumulator: List[ParseError]
     ):
         self.snippets = snippets
+        self.args = args
         self.errors = error_accumulator
         # maps declaration source files and names to snippets
         self.declarations: Dict[Tuple[SourceFile, str], _Snippet] = dict()
@@ -112,17 +115,18 @@ class _Ctx:
 
     def process_usages(self) -> None:
         for snippet in self.snippets:
-            try:
-                declaration = self.declarations.get(snippet.key())
-                if declaration is None:
-                    self.errors.append(SingleParseError(
-                        'Unknown snippet ' + snippet.start.prefix_name() + '{}',
-                        snippet.start.span(),
-                    ))
-                else:
-                    snippet.check_against(declaration, self.errors)
-            except ParseError as e:
-                self.errors.append(e)
+            if self.args.snippets_enabled_for(snippet.start.span()):
+                try:
+                    declaration = self.declarations.get(snippet.key())
+                    if declaration is None:
+                        self.errors.append(SingleParseError(
+                            'Unknown snippet ' + snippet.start.prefix_name() + '{}',
+                            snippet.start.span(),
+                        ))
+                    else:
+                        snippet.check_against(declaration, self.errors)
+                except ParseError as e:
+                    self.errors.append(e)
 
 def _parse_snippets(
     code: List[Instruction],
@@ -146,10 +150,10 @@ def _parse_snippets(
 def _filter_snippet_instructions(code: List[Instruction]) -> List[Instruction]:
     return [instr for instr in code if not isinstance(instr, SnippetInstr)]
 
-def process(code: List[Instruction], error_accumulator: List[ParseError]) -> list[Instruction]:
+def process(code: List[Instruction], args: Args, error_accumulator: List[ParseError]) -> list[Instruction]:
     '''Adds parse errors to the accumulator for unmatching snippets, returns list with snippets removed'''
     snippets = _parse_snippets(code, error_accumulator)
-    ctx = _Ctx(snippets, error_accumulator)
+    ctx = _Ctx(snippets, args, error_accumulator)
     ctx.process_declarations()
     ctx.process_usages()
     return _filter_snippet_instructions(code)

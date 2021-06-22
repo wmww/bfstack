@@ -22,7 +22,7 @@ def _code_and_snippets(span: Span, args: Args, error_accumulator: List[ParseErro
     for i, c in enumerate(text):
         if c in op_set:
             code.append(Op(c, span[i:i+1]))
-        elif args.snippets:
+        elif args.snippets_enabled_anywhere():
             if c == '{':
                 name_match = snippet_name.search(text[:i])
                 if name_match is None:
@@ -121,14 +121,14 @@ def _line(span: Span, args: Args, error_accumulator: List[ParseError]) -> List[I
     if not text:
         return []
     code = _code_and_snippets(span, args, error_accumulator)
-    if args.snippets and text.startswith('use '):
+    if args.snippets_enabled_for(span) and text.startswith('use '):
         match = use_statement.match(text)
         if match is None:
             error_accumulator.append(SingleParseError('Invalid use statement', span))
             return code
         else:
             return [UseStatement(match.group(1), span)]
-    elif args.assertions and text[0] == '=':
+    elif args.assertions_enabled_for(span) and text[0] == '=':
         if code:
             error_accumulator.append(SingleParseError('Brainfuck code in assertion line', span))
             return code
@@ -173,7 +173,7 @@ def source(
     code: List[Instruction] = []
     for sub in _split_on(span, set(['\n'])):
         code += _line(sub, args, error_accumulator)
-    if args.assertions:
+    if args.assertions_enabled_for(span):
         # Empty assertions at either end make the property tests happy
         code.insert(0, StartTapeAssertion(Span(source_file, 0, 0)))
         end_index = len(source_file.contents())

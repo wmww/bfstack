@@ -1,5 +1,8 @@
 import argparse
-from typing import List
+from typing import List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from span import Span
 
 default_test_iters = 48
 default_test_endless_loop_threshold = 10000
@@ -7,14 +10,36 @@ default_test_endless_loop_threshold = 10000
 class Args:
     def __init__(self):
         self.source_path = None
-        self.snippets = True
-        self.assertions = True
+        self._snippets = True
+        self._assertions = True
         self.show_info = True
         self.optimize = True
         self.prop_tests = False
+        self.shallow = False
         self.test_iterations = default_test_iters
         self.test_endless_loop_threshold = default_test_endless_loop_threshold
         self.expect_fail = False
+
+    def assertions_enabled_for(self, span: 'Span') -> bool:
+        if self._assertions:
+            if self.shallow and span.source_file().is_used():
+                return False
+            else:
+                return True
+        else:
+            return False
+
+    def snippets_enabled_for(self, span: 'Span') -> bool:
+        if self._snippets:
+            if self.shallow and span.source_file().is_used():
+                return False
+            else:
+                return True
+        else:
+            return False
+
+    def snippets_enabled_anywhere(self) -> bool:
+        return self._snippets
 
     def parse(self, argv: List[str]):
         parser = argparse.ArgumentParser(description='Run and/or test a brainfuck program')
@@ -42,6 +67,9 @@ class Args:
             '--iterations', type=int,
             help='if running tests, number of iterations to run. Default is ' + str(default_test_iters))
         parser.add_argument(
+            '--shallow', action='store_true',
+            help='do not check snippets and run tests from `use`d files')
+        parser.add_argument(
             '-c', '--color', action='store_true',
             help='force enable terminal colors')
         parser.add_argument(
@@ -49,11 +77,12 @@ class Args:
             help='force disable terminal colors')
         result = parser.parse_args(argv)
         self.source_path = result.source_file
-        self.snippets = not (result.no_snippets or result.run_only)
-        self.assertions = not (result.no_assertions or result.run_only)
+        self._snippets = not (result.no_snippets or result.run_only)
+        self._assertions = not (result.no_assertions or result.run_only)
         self.show_info = result.info
         self.optimize = not result.no_optimize
         self.prop_tests = result.test
+        self.shallow = result.shallow
         if result.iterations is not None:
             self.test_iterations = result.iterations
 
@@ -66,5 +95,5 @@ class Args:
         if result.iterations is not None and not result.test:
             raise RuntimeError('iterations can only be specified when running tests')
 
-        if self.prop_tests and not self.assertions:
+        if self.prop_tests and not self._assertions:
             raise RuntimeError('assertions must be enabled in order to run tests')

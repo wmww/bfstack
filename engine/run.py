@@ -27,12 +27,12 @@ def run(args: Args, io: Io) -> None:
     program = None
     try:
         load_start_time = time.time()
-        source_file = SourceFile(args.source_path)
+        source_file = SourceFile(args.source_path, False)
         errors: List[ParseError] = []
         code = parse.source(source_file, args, errors)
-        if args.snippets:
+        if args.snippets_enabled_anywhere():
             code = use_file.expand(code, args, errors)
-            code = snippets.process(code, errors)
+            code = snippets.process(code, args, errors)
         if args.optimize:
             code = optimize.optimize(code)
         if errors:
