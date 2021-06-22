@@ -1,7 +1,7 @@
 import argparse
 from typing import List
 
-default_test_iters = 24
+default_test_iters = 48
 
 class Args:
     def __init__(self):
@@ -37,6 +37,9 @@ class Args:
             '-0', '--no-optimize', action='store_true',
             help='don\'t apply any optimizations')
         parser.add_argument(
+            '--iterations', type=int,
+            help='if running tests, number of iterations to run. Default is ' + str(default_test_iters))
+        parser.add_argument(
             '-c', '--color', action='store_true',
             help='force enable terminal colors')
         parser.add_argument(
@@ -49,12 +52,17 @@ class Args:
         self.show_info = result.info
         self.optimize = not result.no_optimize
         self.prop_tests = result.test
+        if result.iterations is not None:
+            self.test_iterations = result.iterations
 
         import colors
         if result.color:
             colors.use_color = True
         if result.no_color:
             colors.use_color = False
+
+        if result.iterations is not None and not result.test:
+            raise RuntimeError('iterations can only be specified when running tests')
 
         if self.prop_tests and not self.assertions:
             raise RuntimeError('assertions must be enabled in order to run tests')
