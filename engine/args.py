@@ -2,6 +2,7 @@ import argparse
 from typing import List
 
 default_test_iters = 48
+default_test_endless_loop_threshold = 10000
 
 class Args:
     def __init__(self):
@@ -12,6 +13,7 @@ class Args:
         self.optimize = True
         self.prop_tests = False
         self.test_iterations = default_test_iters
+        self.test_endless_loop_threshold = default_test_endless_loop_threshold
         self.expect_fail = False
 
     def parse(self, argv: List[str]):

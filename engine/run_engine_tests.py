@@ -69,6 +69,7 @@ class OptimizedPropertyTests(TestCase):
     def init_args(self, args: Args):
         args.prop_tests = True
         args.optimize = True
+        args.test_endless_loop_threshold = 1000
 
 @construct_test_class
 class UnoptimizedIntegrationTests(TestCase):
@@ -81,6 +82,7 @@ class UnoptimizedPropertyTests(TestCase):
     def init_args(self, args: Args):
         args.prop_tests = True
         args.optimize = False
+        args.test_endless_loop_threshold = 4000
 
 class EngineTypesTest(TestCase):
     def test_engine_types(self):

@@ -10,7 +10,7 @@ from typing import cast, List
 
 logger = logging.getLogger(__name__)
 
-def _property_test_iteration(program: Program, start_code_index: int, seed: str):
+def _property_test_iteration(args: Args, program: Program, start_code_index: int, seed: str):
     assertion = cast(TapeAssertion, program.code[start_code_index])
     assert isinstance(assertion, TapeAssertion)
     ctx = AssertionCtx(seed)
@@ -19,15 +19,14 @@ def _property_test_iteration(program: Program, start_code_index: int, seed: str)
     program.assertion_ctx = ctx
     program.io = AssertionCtxIo(ctx)
     try:
-        max_iters = 10000
-        current_iter = 0
+        instr_count = 0
         program.iteration()
         while program.iteration():
             instr = program.code[program.current]
             if (instr.ends_assertion_block()):
                 break
-            current_iter += 1
-            if current_iter > max_iters:
+            instr_count += 1
+            if instr_count > args.test_endless_loop_threshold:
                 error = ProgramError('Took too long to complete')
                 error.tape = program.tape
                 error.span = instr.span()
@@ -49,7 +48,7 @@ def run_property_tests(args: Args, program: Program):
             for i in range(args.test_iterations):
                 try:
                     seed = str(assertion_count) + ',' + str(i)
-                    _property_test_iteration(program, index, seed)
+                    _property_test_iteration(args, program, index, seed)
                     an_iteration_succeeded = True
                     passes_iterations += 1
                     if args.expect_fail:
