@@ -1,20 +1,21 @@
 [
 The BFStack standard library. It resides in module 1.
 
-use "bfstack.bf"
+use "dispatch.bf"
 ]
 
 >
 
 std{
 mod std(1)
-bfstack/mod_start{ [>+<-[[<+>-]>-<]>[<+>-]<[-<<<[>>+>+<<<-]>>[<<+>>-]> }
+dispatch/mod_start{ [>+<-[[<+>-]>-<]>[<+>-]<[-<<<[>>+>+<<<-]>>[<<+>>-]> }
     sub abort(1)
-    bfstack/sub_start{ [>+<-[[<+>-]>-<]>[<+>-]<[-<<[>+>+<<-]>[<+>-]>[>+<-[[<+>-]>-<]>[<+>-]<[->+> }
+    dispatch/sub_start{ [>+<-[[<+>-]>-<]>[<+>-]<[-<<[>+>+<<-]>[<+>-]>[>+<-[[<+>-]>-<]>[<+>-]<[->+> }
+        causes the program to complete
         = M S L 0 | 0 1 | `* * * *
         set the abort code
         <+>
         = M S L 0 | 0 2 | `*
-    bfstack/sub_end{ <<]]<[>+<-]>[>[-]+++++<[-]]]]<[>+<-]> }
-bfstack/mod_end{ [>[-]++++<[-]]]]<[>+<-]> }
+    dispatch/sub_end{ <<]]<[>+<-]>[>[-]+++++<[-]]]]<[>+<-]> }
+dispatch/mod_end{ [>[-]++++<[-]]]]<[>+<-]> }
 }
