@@ -4,8 +4,7 @@ set -eo pipefail
 
 DIR="$(realpath "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )")"
 
-echo "paste in your code:"
-echo
+printf "\x1b[34mpaste in your code:\x1b[0m\n\n"
 
 # Black magic from https://stackoverflow.com/a/20913871
 IFS= read -d '' -n 1 CODE
@@ -14,10 +13,7 @@ do
     CODE+=$c
 done
 
-echo
-echo
-echo "minifying..."
-echo
+printf "\n\n\x1b[34mminifying...\x1b[0m\n"
 
 echo "$CODE" | "$DIR/run-bf-fast.sh" "$DIR/minify.bf"
 

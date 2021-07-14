@@ -1,6 +1,3 @@
 __pycache__
 .mypy_cache
 *.kate-swp
-
-# Often modified in ways that are system-specific
-tools/run-bf-fast.sh
