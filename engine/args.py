@@ -1,5 +1,5 @@
 import argparse
-from typing import List, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from span import Span
@@ -8,8 +8,8 @@ default_test_iters = 48
 default_test_endless_loop_threshold = 10000
 
 class Args:
-    def __init__(self):
-        self.source_path = None
+    def __init__(self) -> None:
+        self.source_path: Optional[str] = None
         self._snippets = True
         self._assertions = True
         self.show_info = True

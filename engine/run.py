@@ -25,6 +25,8 @@ def run_normally(program: Program):
 
 def run(args: Args, io: Io) -> None:
     program = None
+    if args.source_path is None:
+        raise RuntimeError('No source file')
     try:
         load_start_time = time.time()
         source_file = SourceFile(args.source_path, False)
