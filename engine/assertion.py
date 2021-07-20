@@ -9,16 +9,14 @@ from colors import make_color, Color
 from typing import Sequence, Optional, List, Set
 
 class AssertionFailedError(TestError):
-    def __init__(self, state: 'TapeAssertion', actual_tape: str, ctx: AssertionCtx):
-        msg = 'Assertion failed:'
-        msg += '\n     Actual: ' + make_color(Color.TAPE, actual_tape)
-        msg += '\n  Assertion: ' + make_color(Color.ERROR, str(state))
-        if ctx.bound_vars:
-            msg += '\n  Variables: ' + make_color(Color.INFO, repr(ctx.bound_vars))
-        super().__init__(msg)
+    def __init__(self, message: str):
+        super().__init__('Assertion failed:\n' + message)
 
 class Matcher:
-    def __str__(self):
+    def __str__(self) -> str:
+        return self.to_str(None)
+
+    def to_str(self, ctx: Optional[AssertionCtx]) -> str:
         raise NotImplementedError()
 
     def bind(self, ctx: AssertionCtx, value: int):
@@ -37,8 +35,11 @@ class VariableMatcher(Matcher):
     def __init__(self, name: str):
         self._name = name
 
-    def __str__(self):
-        return str(self._name)
+    def to_str(self, ctx: Optional[AssertionCtx]) -> str:
+        result = str(self._name)
+        if ctx:
+            result += '=' + str(ctx.bound_vars.get(self._name, '?'))
+        return result
 
     def bind(self, ctx: AssertionCtx, value: int):
         if self._name not in ctx.bound_vars:
@@ -64,7 +65,7 @@ class LiteralMatcher(Matcher):
         self._text = text
         self._value = value
 
-    def __str__(self):
+    def to_str(self, ctx: Optional[AssertionCtx]) -> str:
         text = self._text
         if text != str(self._value):
             text += ':' + str(self._value)
@@ -83,7 +84,7 @@ class LiteralMatcher(Matcher):
         return self._value
 
 class WildcardMatcher(Matcher):
-    def __str__(self):
+    def to_str(self, ctx: Optional[AssertionCtx]) -> str:
         return '*'
 
     def bind(self, ctx: AssertionCtx, value: int):
@@ -102,8 +103,8 @@ class InverseMatcher(Matcher):
     def __init__(self, inner: Matcher):
         self._inner = inner
 
-    def __str__(self):
-        return '!' + str(self._inner)
+    def to_str(self, ctx: Optional[AssertionCtx]) -> str:
+        return '!' + self._inner.to_str(ctx)
 
     def bind(self, ctx: AssertionCtx, value: int):
         pass
@@ -128,7 +129,7 @@ class AssertionReset(Instruction):
     def __init__(self, span: Span):
         self._span = span
 
-    def __str__(self):
+    def to_str(self, ctx: Optional[AssertionCtx]) -> str:
         return '= ~'
 
     def run(self, program: Program):
@@ -162,6 +163,34 @@ class TapeAssertion(Instruction):
             if used is not None:
                 self._used_variables = self._used_variables.union(used)
 
+    def format_error(self, program: Program) -> str:
+        a_line = make_color(Color.INFO, 'Assertion: ')
+        t_line = make_color(Color.INFO, '     Tape: ')
+        for i, cell in enumerate(self._cells):
+            if i:
+                a_line += ' '
+                t_line += ' '
+            if i == self._offset_of_current:
+                a_line += '`'
+                t_line += '`'
+            a_cell = cell.to_str(program.assertion_ctx)
+            try:
+                t_cell = str(program.tape.get_value(i - self._offset_of_current))
+            except OffEdgeOfTestTapeError:
+                # This cell is off the range of what the tape knows about
+                t_cell = ''
+            while len(a_cell) < len(t_cell):
+                a_cell = ' ' + a_cell
+            while len(t_cell) < len(a_cell):
+                t_cell = ' ' + t_cell
+            if self.cell_matches(program, i):
+                a_line += a_cell
+                t_line += t_cell
+            else:
+                a_line += make_color(Color.ERROR, a_cell)
+                t_line += make_color(Color.GOOD, t_cell)
+        return a_line + '\n' + t_line
+
     def __str__(self):
         result = '= '
         if self._allow_slide_left:
@@ -184,6 +213,16 @@ class TapeAssertion(Instruction):
         tape.set_assertion_bounds(left, right)
         tape.check_range_allowed(left_edge, right_edge)
 
+    def cell_matches(self, program: Program, i: int) -> bool:
+        try:
+            return self._cells[i].matches(
+                program.assertion_ctx,
+                program.tape.get_value(i - self._offset_of_current)
+            )
+        except OffEdgeOfTestTapeError:
+            # This cell is off the range of what the tape knows about
+            return True
+
     def run(self, program: Program):
         program.real_ops += 1 + len(self._cells)
 
@@ -200,16 +239,9 @@ class TapeAssertion(Instruction):
                 # This cell is off the range of what the tape knows about
                 pass
 
-        for i, cell in enumerate(self._cells):
-            try:
-                if not cell.matches(program.assertion_ctx, program.tape.get_value(i - self._offset_of_current)):
-                    raise AssertionFailedError(
-                        self,
-                        program.tape.range_to_str(-self._offset_of_current, len(self._cells) - self._offset_of_current),
-                        program.assertion_ctx)
-            except OffEdgeOfTestTapeError:
-                # This cell is off the range of what the tape knows about
-                pass
+        for i in range(len(self._cells)):
+            if not self.cell_matches(program, i):
+                raise AssertionFailedError(self.format_error(program))
 
         program.assertion_ctx.remove_unused_vars(self._used_variables)
 
