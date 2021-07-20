@@ -25,12 +25,8 @@ def main() -> None:
         io = UserIo()
         run(args, io)
         success = True
-    except FileLoadingError as e:
+    except (FileLoadingError, ParseError, ProgramError) as e:
         logger.error(e)
-    except ParseError as e:
-        logger.error('Syntax error: ' + str(e))
-    except ProgramError as e:
-        logger.error(make_color(Color.ERROR, 'Program failed: ') + str(e))
     if not success:
         exit(1)
 

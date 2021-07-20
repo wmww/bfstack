@@ -16,13 +16,7 @@ class MultiError:
         self.errors = errors
 
     def __str__(self) -> str:
-        result = make_color(
-            Color.ERROR,
-            str(len(self.errors)) + ' error' + ('s' if len(self.errors) != 1 else '') + ':'
-        )
-        for e in self.errors:
-            result += '\n' + str(e) + '\n'
-        return result
+        return '\n' + '\n\n'.join([str(err) for err in self.errors]) + '\n'
 
 class ParseError(Exception):
     '''For when the program has syntax errors'''
