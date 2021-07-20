@@ -55,9 +55,12 @@ class Span:
             os.path.relpath(self._source.path()) + ':' + str(self.line()) + ' ' +
             str(self.col()) + '..' + str(self.col() + self.length() - 1))
 
+    def error_file_path(self) -> str:
+        return make_color(Color.FILEPATH, os.path.relpath(self._source.path()) + ':' + str(self.line()) + ':')
+
     def error_str(self) -> str:
         '''Format in a way suitable for error messages, ends with a newline'''
-        result = make_color(Color.FILEPATH, os.path.relpath(self._source.path()) + ':' + str(self.line()) + ':\n')
+        result = self.error_file_path() + '\n'
         start_line = self._source.line_of(self._start_char)
         end_line = self._source.line_of(self._end_char)
         if start_line == end_line:

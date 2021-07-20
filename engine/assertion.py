@@ -10,7 +10,14 @@ from typing import Sequence, Optional, List, Set
 
 class AssertionFailedError(TestError):
     def __init__(self, message: str):
-        super().__init__('Assertion failed:\n' + message)
+        super().__init__(make_color(Color.ERROR, 'assertion failed:\n') + message)
+
+    def __str__(self) -> str:
+        result = ''
+        if self.span:
+            result += self.span.error_file_path() + ' '
+        result += self.message
+        return result
 
 class Matcher:
     def __str__(self) -> str:
