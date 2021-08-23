@@ -11,7 +11,7 @@ Allocated dynamic memory is stored in the heap, which is an area of the tape far
 ```
 The heap is made out of sections of arbitrary size. Each section can be used or unused. A section looks like this:
 ```
-= 0 C | W X Y Z | 0 0 | (data)
+= 0 C | 0 0 0 0 | 0 0 | W X Y Z | 0 0 | (data)
 ```
 `C` is the code indicating if and what type of section starts at this word:
 - `0`: in the middle of a section
@@ -23,7 +23,7 @@ The heap is made out of sections of arbitrary size. Each section can be used or 
 
 This means a heap that contains one 260-long free section and one 2-long used section will look like this (note that in base-256 160 is represented as `14`):
 ```
-= (stack and free space) | 0 3 | 0 0 0 0 | 0 1 | 0 0 1 4 | 0 0 | (260 words (1560 cells) of 0s) | 0 2 | 0 0 0 2 | 0 0 | A B C D | 0 0 | E F G H | 0 3 | 0 0 0 0 | (0s forever)
+= (stack and free space) | 0 3 | 0 0 0 0 | 0 1 | 0 0 0 0 | 0 0 1 4 | 0 0 | (260 words (1560 cells) of 0s) | 0 2 | 0 0 0 0 | 0 0 0 2 | 0 0 | A B C D | 0 0 | E F G H | 0 3 | 0 0 0 0 | (0s forever)
 ```
 
 ## Addresses
