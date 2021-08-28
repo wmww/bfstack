@@ -12,7 +12,7 @@ TAPE_OFFSET_SEARCH_ZONE = 12
 
 class AssertionFailedError(TestError):
     def __init__(self, message: str):
-        super().__init__(make_color(Color.ERROR, 'assertion failed:\n') + message)
+        super().__init__(make_color(Color.ERROR, 'assertion failed') + message)
 
     def __str__(self) -> str:
         result = ''
@@ -235,7 +235,14 @@ class TapeAssertion(Instruction):
             else:
                 a_line += make_color(Color.ERROR, a_cell)
                 t_line += make_color(Color.GOOD, t_cell)
-        return a_line + '\n' + t_line
+        result = ' (previous assertion: '
+        if program.assertion_ctx.last_assertion:
+            result += program.assertion_ctx.last_assertion._span.error_file_path()
+        else:
+            result += make_color(Color.FILEPATH, 'none')
+        result += '):\n'
+        result += a_line + '\n' + t_line
+        return result
 
     def __str__(self):
         result = '= '
@@ -287,6 +294,7 @@ class TapeAssertion(Instruction):
                 raise AssertionFailedError(self.format_error(program))
 
         program.assertion_ctx.remove_unused_vars(self._used_variables)
+        program.assertion_ctx.last_assertion = self
 
     def loop_level_change(self) -> int:
         return 0

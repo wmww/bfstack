@@ -1,11 +1,12 @@
 from random import Random
-from typing import Dict, Set
+from typing import Dict, Set, Optional
 from io_interface import Io
 
 class AssertionCtx:
     def __init__(self, seed):
         self.rand = Random(seed)
         self.bound_vars: Dict[str, int] = {}
+        self.last_assertion: Optional['TapeAssertion'] = None
 
     def random_biased_byte(self) -> int:
         value = self.rand.randint(0, 256 * 3)
