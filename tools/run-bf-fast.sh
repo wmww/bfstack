@@ -17,10 +17,15 @@ if test ! -z "$TRITIUM"; then
     printf "\x1b[32mrunning with tritium...\x1b[0m\n\n"
     "$TRITIUM" -b $1
 elif test ! -z "$BFC"; then
-    printf "\x1b[32mcompiling with bfc...\x1b[0m\n"
-    cp "$1" /tmp/bfc-code.bf
-    cd /tmp
-    "$BFC" bfc-code.bf
+    if diff "$1" /tmp/bfc-code.bf >/dev/null && test -f /tmp/bfc-code; then
+        printf "\x1b[32mprogram cached\x1b[0m\n"
+        cd /tmp
+    else
+        printf "\x1b[33mcompiling with bfc...\x1b[0m\n"
+        cp "$1" /tmp/bfc-code.bf
+        cd /tmp
+        "$BFC" bfc-code.bf
+    fi
     printf "\x1b[32mrunning...\x1b[0m\n"
     ./bfc-code
 else
