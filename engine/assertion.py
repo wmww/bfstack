@@ -2,11 +2,13 @@ from instruction import Instruction
 from program import Program
 from tape import Tape
 from assertion_ctx import AssertionCtx
-from errors import TestError, OffEdgeOfTestTapeError
+from errors import TestError, ProgramError, OffEdgeOfTestTapeError
 from span import Span
 from colors import make_color, Color
 
 from typing import Sequence, Optional, List, Set
+
+TAPE_OFFSET_SEARCH_ZONE = 12
 
 class AssertionFailedError(TestError):
     def __init__(self, message: str):
@@ -106,6 +108,10 @@ class WildcardMatcher(Matcher):
     def random_matching(self, ctx: AssertionCtx) -> int:
         return ctx.random_biased_byte()
 
+class OffEdgeMatcher(WildcardMatcher):
+    def to_str(self, ctx: Optional[AssertionCtx]) -> str:
+        return ''
+
 class InverseMatcher(Matcher):
     def __init__(self, inner: Matcher):
         self._inner = inner
@@ -170,27 +176,60 @@ class TapeAssertion(Instruction):
             if used is not None:
                 self._used_variables = self._used_variables.union(used)
 
+    def tape_offset(self, program: Program) -> int:
+        '''Returns the offset of the tape that gives the minimum failed cells'''
+        best_offset = 0
+        best_score = 0
+        for offset in range(-TAPE_OFFSET_SEARCH_ZONE, TAPE_OFFSET_SEARCH_ZONE + 1):
+            score = 0
+            for i in range(len(self._cells)):
+                if self.cell_matches(program, i, offset, False):
+                    score += 1
+            if score > best_score:
+                best_score = score
+                best_offset = offset
+        return best_offset
+
+    def _get_cell(self, index: int) -> Matcher:
+        if index >= 0 and index < len(self._cells):
+            return self._cells[index]
+        else:
+            return OffEdgeMatcher()
+
     def format_error(self, program: Program) -> str:
         a_line = make_color(Color.INFO, 'Assertion: ')
         t_line = make_color(Color.INFO, '     Tape: ')
-        for i, cell in enumerate(self._cells):
-            if i:
+        offset_of_tape = self.tape_offset(program)
+        start = min(0, self._offset_of_current - offset_of_tape)
+        end = max(len(self._cells), self._offset_of_current - offset_of_tape + 1)
+        for i in range(start, end):
+            cell = self._get_cell(i)
+            if i != start:
                 a_line += ' '
                 t_line += ' '
-            if i == self._offset_of_current:
+            a_current = i == self._offset_of_current
+            t_current = i + offset_of_tape == self._offset_of_current
+            if a_current and t_current:
                 a_line += '`'
                 t_line += '`'
+            elif a_current:
+                a_line += make_color(Color.ERROR, '`')
+                t_line += ' '
+            elif t_current:
+                a_line += ' '
+                t_line += make_color(Color.GOOD, '`')
             a_cell = cell.to_str(program.assertion_ctx)
-            try:
-                t_cell = str(program.tape.get_value(i - self._offset_of_current))
-            except OffEdgeOfTestTapeError:
+            t_value = program.tape.maybe_get_value(i + offset_of_tape - self._offset_of_current)
+            if t_value is not None:
+                t_cell = str(t_value)
+            else:
                 # This cell is off the range of what the tape knows about
                 t_cell = ''
             while len(a_cell) < len(t_cell):
                 a_cell = ' ' + a_cell
             while len(t_cell) < len(a_cell):
                 t_cell = ' ' + t_cell
-            if self.cell_matches(program, i):
+            if self.cell_matches(program, i, offset_of_tape):
                 a_line += a_cell
                 t_line += t_cell
             else:
@@ -220,15 +259,12 @@ class TapeAssertion(Instruction):
         tape.set_assertion_bounds(left, right)
         tape.check_range_allowed(left_edge, right_edge)
 
-    def cell_matches(self, program: Program, i: int) -> bool:
-        try:
-            return self._cells[i].matches(
-                program.assertion_ctx,
-                program.tape.get_value(i - self._offset_of_current)
-            )
-        except OffEdgeOfTestTapeError:
-            # This cell is off the range of what the tape knows about
-            return True
+    def cell_matches(self, program: Program, i: int, offset: int = 0, accept_off_edge: bool = True) -> bool:
+        tape_value = program.tape.maybe_get_value(i - self._offset_of_current + offset)
+        if tape_value is not None:
+            return self._get_cell(i).matches(program.assertion_ctx, tape_value)
+        else:
+            return accept_off_edge
 
     def run(self, program: Program):
         program.real_ops += 1 + len(self._cells)

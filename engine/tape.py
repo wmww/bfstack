@@ -93,6 +93,15 @@ class Tape:
         self._right_bound = None if right_offset is None else self._position + right_offset
         self.check_offset_allowed(0)
 
+    def maybe_get_value(self, offset: int) -> Optional[int]:
+        i = offset + self._position + self._offset_to_data
+        if i >= 0 and i < len(self._data):
+            return self._data[i]
+        elif not self._is_test_tape and offset + self._position >= 0:
+            return 0
+        else:
+            return None
+
     def _get_value_unchecked_absolute(self, logical_position: int) -> int:
         i = logical_position + self._offset_to_data
         if i >= 0 and i < len(self._data):
