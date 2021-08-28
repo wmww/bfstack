@@ -17,10 +17,12 @@ if test ! -z "$TRITIUM"; then
     printf "\x1b[32mrunning with tritium...\x1b[0m\n\n"
     "$TRITIUM" -b $1
 elif test ! -z "$BFC"; then
-    printf "\x1b[32compiling with bfc...\x1b[0m\n"
-    "$BFC" $1 -o /tmp/bfc-out
-    printf "\x1b[32running...\x1b[0m\n"
-    /tmp/bfc-out
+    printf "\x1b[32mcompiling with bfc...\x1b[0m\n"
+    cp "$1" /tmp/bfc-code.bf
+    cd /tmp
+    "$BFC" bfc-code.bf
+    printf "\x1b[32mrunning...\x1b[0m\n"
+    ./bfc-code
 else
     printf "\n\x1b[33m"
     printf "using built-in engine. "
