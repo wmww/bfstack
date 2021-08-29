@@ -21,7 +21,7 @@ The heap is made out of sections of arbitrary size. Each section can be used or 
 
 `W`, `X`, `Y` and `Z` are a 4-cell number that represents the size of the section (in words).
 
-This means a heap that contains one 260-long free section and one 2-long used section will look like this (note that in base-256 160 is represented as `14`):
+This means a heap that contains one 260-long free section and one 2-long used section will look like this (note that in base-256 260 is represented as `14`):
 ```
 = (stack and free space) | 0 3 | 0 0 0 0 | 0 1 | 0 0 0 0 | 0 0 1 4 | 0 0 | (260 words (1560 cells) of 0s) | 0 2 | 0 0 0 0 | 0 0 0 2 | 0 0 | A B C D | 0 0 | E F G H | 0 3 | 0 0 0 0 | (0s forever)
 ```
