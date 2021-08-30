@@ -236,8 +236,91 @@ alloc{
     = 0 `0 | 0 0 0 0 | 0 0 | B0 B1 B2 B3
     assume we've found a free section; it will now be used so mark it with 2
     ++
-    = 0 * | * * * * | 0 * | * * * * | 0 * | * * * * | 0 * | * * * * | 0 `2 | 0 0 0 0 | 0 0 | B0 B1 B2 B3
-    TODO: move to the start counting as we go
+    = 0 `2 | 0 0 0 0 | 0 0 | B0 B1 B2 B3
+    the most significant digit of return address starts at 1
+    the addresses where it is 0 are reserved for stack references
+    = 0 `2 | 0 0 0 0 | 0 0 | B0 B1 B2 B3 | 0 * | * * * * | 0 * | * * * * | 0 *
+    >>>>>+<<<<<
+    = 0 `2 | 0 0 0 0 | 1 0 | B0 B1 B2 B3 | 0 * | * * * * | 0 * | * * * * | 0 *
+    the loop ends when we hit a 3 so the current cell is always the code minus 3
+    ---
+    = 0 `255 | 0 0 0 0 | 1 0 | B0 B1 B2 B3 | 0 * | * * * * | 0 * | * * * * | 0 *
+    move to the start counting as we go
+    [
+        = 0 * | * * * * | 0 `C_minus_3 | * * * * | A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 *
+        restore C
+        +++<
+        move the expanded address
+        move_expanded_value_left{ >>>>>>[<<<<<<+>>>>>>-] }
+        move_expanded_value_left{ >>>>>>[<<<<<<+>>>>>>-] }
+        move_expanded_value_left{ >>>>>>[<<<<<<+>>>>>>-] }
+        move_expanded_value_left{ >>>>>>[<<<<<<+>>>>>>-] }
+        = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | * * * * | `0 * | * * * * | 0 *
+        if A0 is nonzero the address is not null so increment it
+        <<<<<< <<<<<< <<<<<< <<<<<<
+        = `A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | * * * * | 0 * | * * * * | 0 *
+        [
+            increment the address
+            >>>>>> >>>>>> >>>>>> +
+            = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | `A3_inc * | * * * * | 0 * | * * * * | 0 *
+            copy A3_inc
+            [>>>>>> + >>>>>> + <<<<<< <<<<<< -]
+            >>>>>> [<<<<<< + >>>>>> -]
+            = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3_inc * | * * * * | `0 * | * * * * | A3_inc *
+            test if A3_inc is zero
+            +>>>>>>[<<<<<<[-]>>>>>>[-]]<<<<<<
+            = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3_inc * | * * * * | `A3_inc_is_zero * | * * * * | 0 *
+            [
+                [-]
+                <<<<<< <<<<<< +
+                = A0 * | * * * * | A1 * | * * * * | `A2_inc * | * * * * | A3_inc * | * * * * | 0 * | * * * * | 0 *
+                copy A2_inc
+                [>>>>>> >>>>>> + >>>>>> + <<<<<< <<<<<< <<<<<< -]
+                >>>>>> >>>>>> [<<<<<< <<<<<< + >>>>>> >>>>>> -]
+                = A0 * | * * * * | A1 * | * * * * | A2_inc * | * * * * | A3_inc * | * * * * | `0 * | * * * * | A2_inc *
+                test if A2_inc is zero
+                expanded_test_if_zero{ +>>>>>>[<<<<<<[-]>>>>>>[-]]<<<<<< }
+                = A0 * | * * * * | A1 * | * * * * | A2_inc * | * * * * | A3_inc * | * * * * | `A2_inc_is_zero * | * * * * | 0 *
+                [
+                    [-]
+                    <<<<<< <<<<<< <<<<<< +
+                    = A0 * | * * * * | `A1_inc * | * * * * | A2_inc * | * * * * | A3_inc * | * * * * | 0 * | * * * * | 0 *
+                    copy A1_inc
+                    [>>>>>> >>>>>> >>>>>> + >>>>>> + <<<<<< <<<<<< <<<<<< <<<<<< -]
+                    >>>>>> >>>>>> >>>>>> [<<<<<< <<<<<< <<<<<< + >>>>>> >>>>>> >>>>>> -]
+                    = A0 * | * * * * | A1_inc * | * * * * | A2_inc * | * * * * | A3_inc * | * * * * | `0 * | * * * * | A1_inc *
+                    test if A1_inc is zero
+                    expanded_test_if_zero{ +>>>>>>[<<<<<<[-]>>>>>>[-]]<<<<<< }
+                    = A0 * | * * * * | A1_inc * | * * * * | A2_inc * | * * * * | A3_inc * | * * * * | `A1_inc_is_zero * | * * * * | 0 *
+                    [
+                        [-]
+                        <<<<<< <<<<<< <<<<<< <<<<<< +
+                        = `A0_inc * | * * * * | A1_inc * | * * * * | A2_inc * | * * * * | A3_inc * | * * * * | 0 * | * * * * | 0 *
+                        if A0 overflowed than the address is null and incrementing it each move will stop
+                        no need to check that here
+                        >>>>>> >>>>>> >>>>>> >>>>>>
+                        = A0_inc * | * * * * | A1_inc * | * * * * | A2_inc * | * * * * | A3_inc * | * * * * | `0 * | * * * * | 0 *
+                    ]
+                ]
+            ]
+            = 0 * | * * * * | A0_inc * | * * * * | A1_inc * | * * * * | A2_inc * | * * * * | A3_inc * | * * * * | `0 *
+            move A0_inc left so we can end on it's old cell
+            <<<<<< <<<<<< <<<<<< <<<<<<
+            [<<<<<<+>>>>>>-]
+            = A0_inc * | * * * * | `0 * | * * * * | A1_inc * | * * * * | A2_inc * | * * * * | A3_inc * | * * * * | 0 *
+        ]
+        = A0 * | * * * * | `0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 *
+        move A0 back into place
+        <<<<<<[>>>>>>+<<<<<<-]>
+        = 0 `C | * * * * | A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 *
+        subtract 3 from C so the loop stops when it hits a 3
+        ---
+        = 0 `C_minus_3 | * * * * | A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 *
+    ]
+    = 0 `0 | * * * * | A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 *
+    restore the 3 at the start of the heap
+    +++
+
 }
 
 TEST: can make first allocation
