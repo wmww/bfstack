@@ -10,7 +10,8 @@ use "decrement_word.bf"
 <<<<<< <<<<<< <<<<<
 = 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | `0 0 0 0 | 0 0 | 0 0 0 0 | 0 3 | 0 0 0 0 | 0 3
 
-alloc{
+Takes a word argument that is the size and returns the address of a newly allocated memory block with that size
+try_alloc{
     = 0 * | * * * * | 0 * | * * * * | 0 * | * * * * | 0 * | `A0 A1 A2 A3 | 0 0
     first we want to inflate the size argument into the padding
     [<<<<<< <<<<<< <<<<<< << + >>>>>> >>>>>> >>>>>> >> -]
@@ -21,34 +22,34 @@ alloc{
     = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | 0 * | 0 0 `0 A3 | 0 0
     >[<<<<< + >>>>> -]
     = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | 0 0 0 `0 | 0 0
-    >+
-    = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | 0 0 0 0 | `1 0
+    >>+<+
+    = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | 0 0 0 0 | `1 1
     now we carry the size argument to the start of the heap
     [
-        = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | 0 0 0 0 | `!0 0 | 0 0 0 0 | 0 a
+        = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | 0 0 0 0 | `!0 * | 0 0 0 0 | 0 a
         drag_arg{
             [-] in practice it's always 1 but assuming that screws up the tests
             <<<<<<[>>>>>>+<<<<<<-]
             <<<<<<[>>>>>>+<<<<<<-]
             <<<<<<[>>>>>>+<<<<<<-]
             <<<<<<[>>>>>>+<<<<<<-]
-            = `0 * | * * * * | A0 * | * * * * | A1 * | * * * * | A2 * | 0 0 0 0 | A3 0 | 0 0 0 0 | 0 a
+            = `0 * | * * * * | A0 * | * * * * | A1 * | * * * * | A2 * | 0 0 0 0 | A3 * | 0 0 0 0 | 0 a
             >>>>>> >>>>>> >>>>>> >>>>>> >>>>>>+
         }
-        = 0 * | * * * * | A0 * | * * * * | A1 * | * * * * | A2 * | 0 0 0 0 | A3 0 | 0 0 0 0 | `1 a
+        = 0 * | * * * * | A0 * | * * * * | A1 * | * * * * | A2 * | 0 0 0 0 | A3 * | 0 0 0 0 | `1 a
         >[
             If a is not zero it should be 3 which means we've hit the start of the heap
-            = A0 * | * * * * | A1 * | * * * * | A2 * | 0 0 0 0 | A3 0 | 0 0 0 0 | 1 `!0
+            = A0 * | * * * * | A1 * | * * * * | A2 * | 0 0 0 0 | A3 * | 0 0 0 0 | 1 `!0
             <[-]>[-]
-            = A0 * | * * * * | A1 * | * * * * | A2 * | 0 0 0 0 | A3 0 | 0 0 0 0 | 0 `0
+            = A0 * | * * * * | A1 * | * * * * | A2 * | 0 0 0 0 | A3 * | 0 0 0 0 | 0 `0
         ]<
-        = A0 * | * * * * | A1 * | * * * * | A2 * | 0 0 0 0 | A3 0 | 0 0 0 0 | `keep_going 0
+        = A0 * | * * * * | A1 * | * * * * | A2 * | 0 0 0 0 | A3 * | 0 0 0 0 | `keep_going 0
         at this point we'll exit IFF we hit the start of the heap
     ]
-    = A0 * | * * * * | A1 * | * * * * | A2 * | 0 0 0 0 | A3 0 | 0 0 0 0 | `0 0
+    = A0 * | * * * * | A1 * | * * * * | A2 * | 0 0 0 0 | A3 * | 0 0 0 0 | `0 0
     restore the 3 that marks the start of the heap (except it's actually 4 until the start of the loop)
     >++++
-    = A0 * | * * * * | A1 * | * * * * | A2 * | 0 0 0 0 | A3 0 | 0 0 0 0 | 0 `4
+    = A0 * | * * * * | A1 * | * * * * | A2 * | 0 0 0 0 | A3 * | 0 0 0 0 | 0 `4
     now we carry the size argument until we find a correctly sized free slot (or the end of the heap)
     [
         = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | * * * * | 0 `!0 | * * * * | 0 C
@@ -322,10 +323,30 @@ alloc{
         = 0 `C_minus_3 | * * * * | A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 *
     ]
     = 0 `0 | * * * * | A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 *
-    restore the 3 at the start of the heap
-    +++
-    = 0 `3 | * * * * | A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 *
-    TODO: carry value back to start
+    set the cell at the start of the heap to 2 so it will end up 3 after being incremented in the loop
+    ++
+    = 0 `2 | * * * * | A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 *
+    drag the value back to the 1 that marked our starting point
+    [
+        = 0 * | * * * * | 0 `start_dec | * * * * | A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 *
+        +<
+        = 0 * | * * * * | `0 start | * * * * | A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 *
+        >>>>>>[<<<<<<+>>>>>>-]
+        >>>>>>[<<<<<<+>>>>>>-]
+        >>>>>>[<<<<<<+>>>>>>-]
+        >>>>>>[<<<<<<+>>>>>>-]
+        <<<<<< <<<<<< <<<<<< <<<<<< <<<<< -
+        = 0 `* | * * * * | A0 start | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | * * * * | 0 *
+    ]
+    we've hit a cell with value 1 and we can leave it 0 now
+    compress down the result address
+    = 0 * | 0 0 0 0 | 0 `0 | * * * * | A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 *
+    >>>>>[<<<<<< <<<< + >>>>>> >>>> -]
+    >>>>>>[<<<<<< <<<<<< <<< + >>>>>> >>>>>> >>> -]
+    >>>>>>[<<<<<< <<<<<< <<<<<< << + >>>>>> >>>>>> >>>>>> >> -]
+    >>>>>>[<<<<<< <<<<<< <<<<<< <<<<<< < + >>>>>> >>>>>> >>>>>> >>>>>> > -]
+    <<<<<< <<<<<< <<<<<< <<<<<< <<<<
+    = 0 * | `A0 A1 A2 A3 | 0 0 | * * * * | 0 * | * * * * | 0 * | * * * * | 0 * | * * * * | 0 *
 }
 
 TEST: can make first allocation
