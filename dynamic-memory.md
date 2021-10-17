@@ -23,11 +23,11 @@ The heap is made out of sections of arbitrary size. Each section can be used or 
 
 This means a heap that contains one 260-long free section and one 2-long used section will look like this (note that in base-256 260 is represented as `14`):
 ```
-= (stack and free space) | 0 3 | 0 0 0 0 | 0 1 | 0 0 0 0 | 0 0 1 4 | 0 0 | (260 words (1560 cells) of 0s) | 0 2 | 0 0 0 0 | 0 0 0 2 | 0 0 | A B C D | 0 0 | E F G H | 0 3 | 0 0 0 0 | (0s forever)
+= (stack and free space) | 0 3 | 0 0 0 0 | 0 1 | 0 0 0 0 | 0 0 | 0 0 1 4 | 0 0 | (260 words (1560 cells) of 0s) | 0 2 | 0 0 0 0 | 0 0 | 0 0 0 2 | 0 0 | A B C D | 0 0 | E F G H | 0 3 | 0 0 0 0 | (0s forever)
 ```
 
 ## Addresses
-Memory addresses are words, and each point to a specific word in heap memory. In the future addresses with the most significant cell as `0` may be changed to refer to stack addresses. All words in the heap are addressable, which means `start_of_allocation - 1` points to the size of the allocation.
+Memory addresses are words, and each point to a specific word in heap memory. In the future addresses with the most significant cell as `0` may be changed to refer to stack addresses. Heap address 0 (represented `1 0 0 0`) is two words after the initial `3` that starts the heap. Those first two words are always guaranteed to be 0. All other words in the heap are addressable, which means `start_of_allocation - 1` points to the size of the allocation.
 
 ## API
 - `std::alloc` takes a word as an argument (the size of the allocation) and returns a word (the address of the start of the allocation). It zeros out the memory block. If it fails to allocate, it aborts the program.
