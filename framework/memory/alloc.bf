@@ -1,9 +1,9 @@
 [
 Allocate heap memory (see dynamic-memory.md)
 
-use "case.bf"
-use "decrement_word.bf"
-use "test_helpers.bf"
+use "../case.bf"
+use "../decrement_word.bf"
+use "../test_helpers.bf"
 ]
 
 >>>>>> >>>>>> >>>>>> >>
