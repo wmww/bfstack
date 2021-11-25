@@ -140,14 +140,37 @@ try_alloc{
                 = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | * * * * | 1 r | `0 0 0 0 | 0 0 | B0 B1 B2 B3
                 whew that was a lot
                 r is now 1 if all the digits of the sizes were equal
-                if r is one we set C to 255 to abort the search for a free section
                 <[
+                    if r is 1
                     = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | * * * * | 1 `r | 0 0 0 0 | 0 0 | B0 B1 B2 B3
-                    <[-]->[-]
-                    = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | * * * * | 255 `0 | 0 0 0 0 | 0 0 | B0 B1 B2 B3
                     clear out the size argument
                     < <<<<<< <<<<<< <<<<<< <<<<<<
-                    [-] >>>>>> [-] >>>>>> [-] >>>>>> [-] >>>>>> >
+                    [-] >>>>>> [-] >>>>>> [-] >>>>>> [-] >>>>>> [-] >
+                    = 0 * | * * * * | 0 * | * * * * | 0 * | * * * * | 0 * | * * * * | 0 `r | 0 0 0 0 | 0 0 | B0 B1 B2 B3
+                    mark the start where we will return to
+                    [-]-
+                    = 0 `255 | 0 0 0 0 | 0 0 | B0 B1 B2 B3 | 0 0 | * * * * | 0 * | * * * *
+                    claer out the free section we are going to use
+                    >>>>> >>>>>> +
+                    = 0 255 | 0 0 0 0 | 0 0 | B0 B1 B2 B3 | `1 0 | * * * * | 0 * | * * * *
+                    [
+                        go until the start of the next section or end of the dynamic memory area
+                        = `C_eq_0 0 | * * * * | 0 C | * * * * | 0 *
+                        [-]>>[-]>[-]>[-]>[-]>+>
+                        = 0 0 | 0 0 0 0 | 1 `C | * * * * | 0 *
+                        [<[-]>[<<<<<< + >>>>>> -]]<
+                        = 0 C | 0 0 0 0 | `C_eq_0 0 | * * * * | 0 *
+                        = ~
+                    ]
+                    replace C
+                    = 0 C | 0 0 0 0 | `0 0 | * * * *
+                    <<<<<[>>>>>> + <<<<<< -]+
+                    = ~ 0 * | 0 0 0 0 | 0 `1 | 0 0 0 0 | 0 C | * * * *
+                    walk back to the start of our section
+                    [[-]<<<<<<+]
+                    = 0 * | * * * * | 0 * | * * * * | 0 * | * * * * | 0 * | * * * * | 0 `0 | 0 0 0 0 | 0 0 | B0 B1 B2 B3
+                    mark that we've found a clear section
+                    <->
                     = 0 * | * * * * | 0 * | * * * * | 0 * | * * * * | 0 * | * * * * | 255 `0 | 0 0 0 0 | 0 0 | B0 B1 B2 B3
                 ]>
                 if the sizes were not equal we do not touch C (it stays 1)
