@@ -2,7 +2,7 @@
 Allocate heap memory (see dynamic-memory.md)
 
 use "../case.bf"
-use "../decrement_word.bf"
+use "../int.bf"
 use "../helpers/inflate.bf"
 use "../helpers/test_helpers.bf"
 ]
@@ -212,7 +212,7 @@ try_alloc{
                     move_word_value_right{ >[>>>>>> + <<<<<< -] }
                     >>>
                     = 0 0 | 0 0 0 0 | 0 0 | `A0 A1 A2 A3 | 0 0 | 0 0 0 0
-                    decrement_word/decrement_word{
+                    int/sub_1{
                         >>>>>><<<[>>>+>+<<<<-]>>>-[<<<+>>>-]+>[<[-]>[-]]<[[-]<<<<[>>>>+>+<<<<<-]>>>>-[<<
                         <<+>>>>-]+>[<[-]>[-]]<[[-]<<<<<[>>>>>+>+<<<<<<-]>>>>>-[<<<<<+>>>>>-]+>[<[-]>[-]]
                         <[[-]<<<<<<[>>>>>>+>+<<<<<<<-]>>>>>>-[<<<<<<+>>>>>>-]+>[<[-]>[-]]<[>+<-]]]]<<<<<
