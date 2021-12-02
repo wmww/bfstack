@@ -1,5 +1,8 @@
 [
 Operations on word-sized integers (works on both signed and unsigned unless otherwise specified
+
+use "word.bf"
+use "helpers/test_helpers.bf"
 ]
 
 add{
@@ -93,6 +96,7 @@ add{
 }
 
 = ~
+test_helpers/clear{ [-]->[-]>[-]>[-]++++++[<++++++[<++++++>-]>-]<<[>[-]<[>+<-]>-]+[[-]<+] }
 
 TEST: can add 0 plus 0
 = `0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0
@@ -282,6 +286,7 @@ sub_1{
 }
 
 = ~
+test_helpers/clear{ [-]->[-]>[-]>[-]++++++[<++++++[<++++++>-]>-]<<[>[-]<[>+<-]>-]+[[-]<+] }
 
 TEST: can decrement 1
 >>>+<<<

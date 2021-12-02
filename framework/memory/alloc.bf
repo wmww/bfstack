@@ -3,7 +3,7 @@ Allocate heap memory (see dynamic-memory.md)
 
 use "../case.bf"
 use "../int.bf"
-use "../helpers/inflate.bf"
+use "../word.bf"
 use "../helpers/test_helpers.bf"
 ]
 
@@ -16,7 +16,7 @@ Takes a word argument that is the size and returns the address of a newly alloca
 try_alloc{
     = 0 * | * * * * | 0 * | * * * * | 0 * | * * * * | 0 * | `A0 A1 A2 A3 | 0 0
     first we want to inflate the size argument into the padding
-    inflate/left{
+    word/inflate_left{
         [<<<<<<<<<<<<<<<<<<<<+>>>>>>>>>>>>>>>>>>>>-]>[<<<<<<<<<<<<<<<+>>>>>>>>>>>>>>>-]>
         [<<<<<<<<<<+>>>>>>>>>>-]>[<<<<<+>>>>>-]<<<
     }
