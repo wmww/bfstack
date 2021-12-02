@@ -10,7 +10,7 @@ from typing import cast, List
 
 logger = logging.getLogger(__name__)
 
-def _property_test_iteration(args: Args, program: Program, start_code_index: int, seed: str) -> bool:
+def _property_test_iteration(program: Program, start_code_index: int, seed: str, real_op_cap: int) -> bool:
     assertion = cast(TapeAssertion, program.code[start_code_index])
     assert isinstance(assertion, TapeAssertion)
     ctx = AssertionCtx(seed)
@@ -19,14 +19,12 @@ def _property_test_iteration(args: Args, program: Program, start_code_index: int
     program.assertion_ctx = ctx
     program.io = AssertionCtxIo(ctx)
     try:
-        instr_count = 0
         program.iteration()
         while program.iteration():
             instr = program.code[program.current]
             if (instr.ends_assertion_block()):
                 break
-            instr_count += 1
-            if instr_count > args.test_endless_loop_threshold:
+            if program.real_ops > real_op_cap:
                 error = ProgramError('Took too long to complete')
                 error.tape = program.tape
                 error.span = instr.span()
@@ -46,10 +44,11 @@ def run_property_tests(args: Args, program: Program):
         if isinstance(instr, TapeAssertion):
             logger.info('Testing ' + str(args.test_iterations) + ' scenarios starting at ' + str(instr.span()))
             an_iteration_succeeded = False
+            real_op_cap = program.real_ops + args.test_endless_loop_threshold * args.test_iterations
             for i in range(args.test_iterations):
                 try:
                     seed = str(assertion_count) + ',' + str(i)
-                    seed_used = _property_test_iteration(args, program, index, seed)
+                    seed_used = _property_test_iteration(program, index, seed, real_op_cap)
                     an_iteration_succeeded = True
                     passes_iterations += 1
                     if args.expect_fail:
