@@ -56,7 +56,7 @@ class VariableMatcher(Matcher):
 
     def matches(self, ctx: AssertionCtx, value: int) -> bool:
         if self._name not in ctx.bound_vars:
-            return False
+            raise TestError('Unbound variable \'' + str(self._name) + '\' can not be matched against ' + str(value))
         return ctx.bound_vars[self._name] == value
 
     def used_variables(self) -> Optional[Set[str]]:
