@@ -11,7 +11,8 @@ from errors import ParseError, MultiParseError, SingleParseError
 import re
 from typing import List, Set, cast
 
-snippet_name = re.compile(r'[^\s\+\-\<\>\,\.\[\]]+$')
+snippet_capture = re.compile(r'[^\s\+\-\<\>\,\.\[\]]+$')
+snippet_allowed = re.compile(r'^[A-Za-z0-9_/]+$')
 var_name = re.compile(r'^[a-zA-Z_][a-zA-Z_0-9]*$')
 number = re.compile(r'^[0-9]+$')
 use_statement = re.compile(r'^use\s"(.*)"$')
@@ -24,11 +25,15 @@ def _code_and_snippets(span: Span, args: Args, error_accumulator: List[ParseErro
             code.append(Op(c, span[i:i+1]))
         elif args.snippets_enabled_anywhere():
             if c == '{':
-                name_match = snippet_name.search(text[:i])
+                name_match = snippet_capture.search(text[:i])
                 if name_match is None:
                     bracket_span = span[i:i+1]
                     error_accumulator.append(SingleParseError('Snippet without name', bracket_span))
                     code.append(SnippetStart(None, SnippetStart.UNNAMED_SNIPPET_NAME, bracket_span))
+                elif not snippet_allowed.match(name_match.group(0)):
+                    name_span = span[i-len(name_match.group(0)):i+1]
+                    error_accumulator.append(SingleParseError('Snippet has invalid hame', name_span))
+                    code.append(SnippetStart(None, name_match.group(0), name_span))
                 else:
                     prefix_name = name_match.group(0)
                     name_components = prefix_name.split('/')
