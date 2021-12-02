@@ -1,15 +1,20 @@
 from random import Random
-from typing import Dict, Set, Optional
+from typing import Dict, Set, Optional, Any, TYPE_CHECKING
 from io_interface import Io
 
+if TYPE_CHECKING:
+    from assertion import TapeAssertion
+
 class AssertionCtx:
-    def __init__(self, seed):
-        self.rand = Random(seed)
+    def __init__(self, seed: Any):
+        self._rand = Random(seed)
         self.bound_vars: Dict[str, int] = {}
         self.last_assertion: Optional['TapeAssertion'] = None
+        self.random_used = False
 
     def random_biased_byte(self) -> int:
-        value = self.rand.randint(0, 256 * 3)
+        self.random_used = True
+        value = self._rand.randint(0, 256 * 3)
         # Most commonly returns 0, then 1 or 255, then anything
         if value >= 256 * 2:
             return 0

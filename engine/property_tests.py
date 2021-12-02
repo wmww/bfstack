@@ -10,7 +10,7 @@ from typing import cast, List
 
 logger = logging.getLogger(__name__)
 
-def _property_test_iteration(args: Args, program: Program, start_code_index: int, seed: str):
+def _property_test_iteration(args: Args, program: Program, start_code_index: int, seed: str) -> bool:
     assertion = cast(TapeAssertion, program.code[start_code_index])
     assert isinstance(assertion, TapeAssertion)
     ctx = AssertionCtx(seed)
@@ -33,6 +33,7 @@ def _property_test_iteration(args: Args, program: Program, start_code_index: int
                 raise error
     except OffEdgeOfTestTapeError:
         pass # this is expected, the test is now over
+    return ctx.random_used
 
 def run_property_tests(args: Args, program: Program):
     io = program.io
@@ -48,7 +49,7 @@ def run_property_tests(args: Args, program: Program):
             for i in range(args.test_iterations):
                 try:
                     seed = str(assertion_count) + ',' + str(i)
-                    _property_test_iteration(args, program, index, seed)
+                    seed_used = _property_test_iteration(args, program, index, seed)
                     an_iteration_succeeded = True
                     passes_iterations += 1
                     if args.expect_fail:
@@ -61,6 +62,8 @@ def run_property_tests(args: Args, program: Program):
                         e = UnexpectedSuccessError(msg)
                         e.span = assertion.span()
                         errors.append(e)
+                        break
+                    if not seed_used:
                         break
                 except ProgramError as e:
                     if not args.expect_fail:
