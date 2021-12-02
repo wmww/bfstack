@@ -16,7 +16,7 @@ Takes a word argument that is the size and returns the address of a newly alloca
 try_alloc{
     = 0 * | * * * * | 0 * | * * * * | 0 * | * * * * | 0 * | `A0 A1 A2 A3 | 0 0
     first we want to inflate the size argument into the padding
-    inflate::left{
+    inflate/left{
         [<<<<<<<<<<<<<<<<<<<<+>>>>>>>>>>>>>>>>>>>>-]>[<<<<<<<<<<<<<<<+>>>>>>>>>>>>>>>-]>
         [<<<<<<<<<<+>>>>>>>>>>-]>[<<<<<+>>>>>-]<<<
     }
@@ -67,7 +67,7 @@ try_alloc{
             = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | * * * * | 0 `C | 0 0 0 0 | 0 0 | B0 B1 B2 B3
             [<+>>+<-]>
             = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | * * * * | C 0 | `C 0 0 0 | 0 0 | B0 B1 B2 B3
-            case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+            case/start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
                 C == 1 (start of free section)
                 compare required size to actual size
                 = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | * * * * | 1 0 | `0 0 0 0 | 0 0 | B0 B1 B2 B3
@@ -173,12 +173,12 @@ try_alloc{
                 ]>
                 if the sizes were not equal we do not touch C (it stays 1)
                 = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | * * * * | new_C 0 | `0 0 0 0 | 0 0 | B0 B1 B2 B3
-            case::end{ ]]<[>+<-]> }
-            case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+            case/end{ ]]<[>+<-]> }
+            case/start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
                 C == 2 (start of used section)
                 do nothing and continue the search for a usable section
-            case::end{ ]]<[>+<-]> }
-            case::start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
+            case/end{ ]]<[>+<-]> }
+            case/start{ [>+<-[[<+>-]>-<]>[<+>-]<[- }
                 C == 3 (end of heap)
                 expand the heap
                 = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | * * * * | 3 0 | `0 0 0 0
@@ -212,7 +212,7 @@ try_alloc{
                     move_word_value_right{ >[>>>>>> + <<<<<< -] }
                     >>>
                     = 0 0 | 0 0 0 0 | 0 0 | `A0 A1 A2 A3 | 0 0 | 0 0 0 0
-                    decrement_word::decrement_word{
+                    decrement_word/decrement_word{
                         >>>>>><<<[>>>+>+<<<<-]>>>-[<<<+>>>-]+>[<[-]>[-]]<[[-]<<<<[>>>>+>+<<<<<-]>>>>-[<<
                         <<+>>>>-]+>[<[-]>[-]]<[[-]<<<<<[>>>>>+>+<<<<<<-]>>>>>-[<<<<<+>>>>>-]+>[<[-]>[-]]
                         <[[-]<<<<<<[>>>>>>+>+<<<<<<<-]>>>>>>-[<<<<<<+>>>>>>-]+>[<[-]>[-]]<[>+<-]]]]<<<<<
@@ -246,7 +246,7 @@ try_alloc{
                 = 0 `0 | 0 0 0 0
                 <->>
                 = 255 0 | `0 0 0 0
-            case::end{ ]]<[>+<-]> }
+            case/end{ ]]<[>+<-]> }
             = ~
             = A0 * | * * * * | A1 * | * * * * | A2 * | * * * * | A3 * | * * * * | C 0 | `* 0 0 0 | 0 0
             clear out whatevers left (should be nothing if a was a valid value)
@@ -372,7 +372,7 @@ try_alloc{
 }
 
 = ~
-test_helpers::clear{ [-]->[-]>[-]>[-]++++++[<++++++[<++++++>-]>-]<<[>[-]<[>+<-]>-]+[[-]<+] }
+test_helpers/clear{ [-]->[-]>[-]>[-]++++++[<++++++[<++++++>-]>-]<<[>[-]<[>+<-]>-]+[[-]<+] }
 
 TEST: can make initial allocation
 = `0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0
@@ -424,7 +424,7 @@ try_alloc{
 allocated address        heap start       used section          that is 2 long        empty contents       heap end
 = `1 0 0 1 | 0 0 | 0 0 0 0 | 0 3 | 0 0 0 0 | 0 2 | 0 0 0 0 | 0 0 | 0 0 0 2 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 3 | 0 0 0 0
 = ~
-test_helpers::clear{ [-]->[-]>[-]>[-]++++++[<++++++[<++++++>-]>-]<<[>[-]<[>+<-]>-]+[[-]<+] }
+test_helpers/clear{ [-]->[-]>[-]>[-]++++++[<++++++[<++++++>-]>-]<<[>[-]<[>+<-]>-]+[[-]<+] }
 
 TEST: can expand heap
 = `0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0
@@ -475,7 +475,7 @@ try_alloc{
 }
 = `1 0 0 5 | 0 0 | 0 0 0 0 | 0 3 | 0 0 0 0 | 0 2 | 0 0 0 0 | 0 0 | 0 0 0 2 | 0 0 | 0 0 0 5 | 0 0 | 1 1 1 1 | 0 2 | 0 0 0 0 | 0 0 | 0 0 0 1 | 0 0 | 0 0 0 0 | 0 3 | 0 0 0 0
 = ~
-test_helpers::clear{ [-]->[-]>[-]>[-]++++++[<++++++[<++++++>-]>-]<<[>[-]<[>+<-]>-]+[[-]<+] }
+test_helpers/clear{ [-]->[-]>[-]>[-]++++++[<++++++[<++++++>-]>-]<<[>[-]<[>+<-]>-]+[[-]<+] }
 
 TEST: can allocate from free section
 = `0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0
@@ -526,7 +526,7 @@ try_alloc{
 }
 = `1 0 0 1 | 0 0 | 0 0 0 0 | 0 3 | 0 0 0 0 | 0 2 | 0 0 0 0 | 0 0 | 0 0 0 2 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 3 | 0 0 0 0
 = ~
-test_helpers::clear{ [-]->[-]>[-]>[-]++++++[<++++++[<++++++>-]>-]<<[>[-]<[>+<-]>-]+[[-]<+] }
+test_helpers/clear{ [-]->[-]>[-]>[-]++++++[<++++++[<++++++>-]>-]<<[>[-]<[>+<-]>-]+[[-]<+] }
 
 TEST: zeros out memory when allocating from a free section
 = `0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0
@@ -577,7 +577,7 @@ try_alloc{
 }
 = `1 0 0 1 | 0 0 | 0 0 0 0 | 0 3 | 0 0 0 0 | 0 2 | 0 0 0 0 | 0 0 | 0 0 0 2 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 | 0 3 | 0 0 0 0
 = ~
-test_helpers::clear{ [-]->[-]>[-]>[-]++++++[<++++++[<++++++>-]>-]<<[>[-]<[>+<-]>-]+[[-]<+] }
+test_helpers/clear{ [-]->[-]>[-]>[-]++++++[<++++++[<++++++>-]>-]<<[>[-]<[>+<-]>-]+[[-]<+] }
 
 TODO: test zero size alloc returns error (currently should fail which is a problem because zero size memory blocks break our assumptions and may cause curruptions)
 TODO: test that out of mem returns error (should pass)
