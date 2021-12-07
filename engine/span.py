@@ -70,12 +70,22 @@ class Span:
             else:
                 result += make_color(Color.ERROR, ' ' * (self.col() - 1) + '\_[zero-length span]' + '\n')
         else:
-            max_line = 0
+            max_right = 0
             for i in range(start_line, end_line + 1):
                 text = self._source.line_text(i)
-                max_line = max(max_line, len(text))
-                result += text + '\n'
-            result += make_color(Color.ERROR, '^' * max_line + '\n')
+                max_right = max(max_right, len(text))
+            start_col = self._source.col_of(self._start_char) - 1
+            end_col = self._source.col_of(self._end_char) - 1
+            result += ' ' * (start_col + 1)
+            result += make_color(Color.ERROR, '_' * (max_right - start_col)) + '\n'
+            for i in range(start_line, end_line + 1):
+                text = self._source.line_text(i)
+                result += ' ' if i == start_line else make_color(Color.ERROR, '|')
+                result += text
+                result += ' ' * (max_right - len(text))
+                result += ' ' if i == end_line else make_color(Color.ERROR, '|')
+                result += '\n'
+            result += ' ' + make_color(Color.ERROR, '^' * end_col) + '\n'
         return result
 
     def extend_to(self, other: 'Span') -> 'Span':
