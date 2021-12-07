@@ -471,10 +471,62 @@ sub_1{
 = `255 255 255 255 | 0 0 | 0 0
 [-]>[-]>[-]>[-]>>>>[-]<<<<<<<
 
-mul{
-    = `A0 A1 A2 A3 | 0 0 | B0 B1 B2 B3 | 0 0 | 0 0 0 0
-
+multiplies two unsigned 1 cell numbers resulting in a 2 cell number with no posibility of overflow
+uses two cells of the next word and does not use the padding
+mul_chars_into_short{
+    = `A B 0 0 | p0 p1 | 0 0
+    stash B and A in the next word for safe keeping
+    [>>>>>>+<<<<<<-]>
+    [>>>>>>+<<<<<<-]>>>>>>
+    = 0 0 0 0 | p0 p1 | A `B
+    [ for each 1 in B add A to the accumulator
+        = X0 X1 0 0 | p0 p1 | A `B
+        copy A
+        <[<<<+<+>>>>-]<<<<[>>>>+<<<<-]>
+        = X0 X1 0 `A | p0 p1 | A B
+        [ for each 1 in A add 1 with potential carry to X
+            = X0 X1 0 `A_remaining | p0 p1 | A B
+            increment X1 and X0
+            <<+<+>
+            = X0_inc `X1_inc 0 A_remaining | p0 p1 | A B
+            decrement X0 if X1 is not now 0
+            [<->[>+<-]]
+            = X0 `0 X1_inc A_remaining | p0 p1 | A B
+            put X1 back and decrement A
+            >[<+>-]>-
+            = X0 X1 0 `A_dec | p0 p1 | A B
+        ]
+        = X0 X1 0 `0 | p0 p1 | A B
+        decrement B
+        >>>>-
+        = X0 X1 0 0 | p0 p1 | A `B_dec
+    ]
+    = X0 X1 0 0 | p0 p1 | A `0
+    <[-]<<<<<<
+    = `X0 X1 0 0 | p0 p1 | 0 0
 }
+
+= ~
+
+TEST: 2 * 3 = 6
+++>+++<
+= `2 3 0 0 | 0 0 | 0 0
+mul_chars_into_short{
+    [>>>>>>+<<<<<<-]>[>>>>>>+<<<<<<-]>>>>>>[<[<<<+<+>>>>-]<<<<[>>>>+<<<<-]>[<<+<+>[<
+    ->[>+<-]]>[<+>-]>-]>>>>-]<[-]<<<<<<
+}
+= `0 6 0 0 | 0 0 | 0 0
+[-]>[-]<
+
+TEST: 243 * 6 = 1458
+---------- --- > ++++++ <
+= `243 6 0 0 | 0 0 | 0 0
+mul_chars_into_short{
+    [>>>>>>+<<<<<<-]>[>>>>>>+<<<<<<-]>>>>>>[<[<<<+<+>>>>-]<<<<[>>>>+<<<<-]>[<<+<+>[<
+    ->[>+<-]]>[<+>-]>-]>>>>-]<[-]<<<<<<
+}
+= `5 178 0 0 | 0 0 | 0 0
+[-]>[-]<
 
 = ~
 test_helpers/clear{ [-]->[-]>[-]>[-]++++++[<++++++[<++++++>-]>-]<<[>[-]<[>+<-]>-]+[[-]<+] }
