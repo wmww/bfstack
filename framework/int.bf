@@ -599,7 +599,7 @@ sub_1{
 = `255 255 255 255 | 0 0 | 0 0
 [-]>[-]>[-]>[-]>>>>[-]<<<<<<<
 
-multiplies two unsigned 1 cell numbers resulting in a 2 cell number with no posibility of overflow
+multiplies two unsigned 1 cell numbers resulting in a 2 cell number with no possibility of overflow
 uses two cells of the next word and does not use the padding
 mul_chars_into_short{
     = `A B 0 0 | p0 p1 | 0 0
