@@ -7,7 +7,7 @@ The basic stack-based [architecture](architecture.md) allows for data to be pass
 ## The Heap
 Allocated dynamic memory is stored in the heap, which is an area of the tape far to the right of the stack. BFStack programs that use dynamic memory should invoke `std::init_heap` to set things up (else the first `std::alloc` will endlessly loop looking for the heap). The heap is structured like so:
 ```
-= (stack and free space) | 0 3 | 0 0 0 0 | (heap)
+= (stack and free space) | 0 3 | 0 0 0 0 | (heap) | 0 3 |
 ```
 The heap is made out of sections of arbitrary size. Each section can be used or unused. A section looks like this:
 ```
@@ -27,7 +27,7 @@ This means a heap that contains one 260-long free section and one 2-long used se
 ```
 
 ## Addresses
-Memory addresses are words, and each point to a specific word in heap memory. In the future addresses with the most significant cell as `0` may be changed to refer to stack addresses. Heap address 0 (represented `1 0 0 0`) is two words after the initial `3` that starts the heap. Those first two words are always guaranteed to be 0. All other words in the heap are addressable, which means `start_of_allocation - 1` points to the size of the allocation.
+Memory addresses are words, and each point to a specific word in heap memory. Addresses with the most significant cell as `0` are not used, and may in the future refer to stack positions. Heap address 0 (represented `1 0 0 0`) is two words after the initial `3` that starts the heap. Those first two words are always guaranteed to be 0. All other words in the heap are addressable, which means `start_of_allocation - 1` points to the size of the allocation.
 
 ## API
 - `std::alloc` takes a word as an argument (the size of the allocation) and returns a word (the address of the start of the allocation). It zeros out the memory block. If it fails to allocate, it aborts the program.
