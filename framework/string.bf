@@ -167,6 +167,93 @@ read_line{
 }
 = ~
 
+prints a string
+print{
+    = 0 * | `S0 S1 S2 S3 | 0 * | S4 S5 S6 S7 | ~
+    [
+        [
+            = continues * | `S0 S1 S2 S3 | 0 * | S4 S5 S6 S7 | ~
+            .[>>>>+<<<<-]
+            = continues * | `0 S1 S2 S3 | S0 * | S4 S5 S6 S7 | ~
+        ]
+        = continues * | `0 S1 S2 S3 | S0 * | S4 S5 S6 S7 | ~
+        >>>>[<<<<+>>>>-]<<<
+        = continues * | S0 `S1 S2 S3 | 0 * | S4 S5 S6 S7 | ~
+        [
+            = continues * | S0 `S1 S2 S3 | 0 * | S4 S5 S6 S7 | ~
+            .[>>>+<<<-]
+            = continues * | S0 `0 S2 S3 | S1 * | S4 S5 S6 S7 | ~
+        ]
+        = continues * | S0 `0 S2 S3 | S1 * | S4 S5 S6 S7 | ~
+        >>>[<<<+>>>-]<<
+        = continues * | S0 S1 `S2 S3 | 0 * | S4 S5 S6 S7 | ~
+        [
+            = continues * | S0 S1 `S2 S3 | 0 * | S4 S5 S6 S7 | ~
+            .[>>+<<-]
+            = continues * | S0 S1 `0 S3 | S2 * | S4 S5 S6 S7 | ~
+        ]
+        = continues * | S0 S1 `0 S3 | S2 * | S4 S5 S6 S7 | ~
+        >>[<<+>>-]<
+        = continues * | S0 S1 S2 `S3 | 0 * | S4 S5 S6 S7 | ~
+        [
+            = continues * | S0 S1 S2 `S3 | 0 * | S4 S5 S6 S7 | ~
+            .[>+<-]
+            = continues * | S0 S1 S2 `0 | S3 * | S4 S5 S6 S7 | ~
+        ]
+        = continues * | S0 S1 S2 `0 | S3 * | S4 S5 S6 S7 | ~
+        >[<+>-]+>>
+        = continues * | S0 S1 S2 S3 | 1 * | `S4 S5 S6 S7 | ~
+        = ~
+    ]
+    = continues * | `0 * * *
+    <<
+    = * * | * * * * | `continues * | 0 * * *
+    [
+        = * * | S0 S1 S2 S3 | `continues * | 0 * * *
+        [-]<<<<<<
+        = `* * | S0 S1 S2 S3 | 0 * | 0 * * *
+        = ~
+    ]
+    = `0 * | S0 S1 S2 S3
+    >>
+    = 0 * | `S0 S1 S2 S3
+}
+= ~
+
+clears a string
+clear{
+    = 0 * | `S0 S1 S2 S3 | 0 * | S4 S5 S6 S7
+    [
+        = 0 * | `S0 S1 S2 S3 | 0 * | S4 S5 S6 S7
+        [-]>[-]>[-]>[-]>+>>
+        = 0 * | 0 0 0 0 | 1 * | `S4 S5 S6 S7
+        = ~
+    ]
+    = ~ continue * | `0 * * *
+    <<[[-]<<<<<<]>>
+    = ~
+    = 0 * | `0 0 0 0
+}
+= ~
+
+= ~
+<<<<<<
+test_helpers/clear{ [-]->[-]>[-]>[-]++++++[<++++++[<++++++>-]>-]<<[>[-]<[>+<-]>-]+[[-]<+] }
+>>>>>>
+
+TEST: can clear empty string
+=  0 0 | `0 0 0 0
+clear{ [[-]>[-]>[-]>[-]>+>>]<<[[-]<<<<<<]>> }
+= 0 0 | `0 0 0 0 | 0 0 ~
+test_helpers/clear{ [-]->[-]>[-]>[-]++++++[<++++++[<++++++>-]>-]<<[>[-]<[>+<-]>-]+[[-]<+] }
+
+TEST: can clear full string
+++>+++>++++>+++++>>+>++>+++<<<<<<<<
+= 0 0 | `2 3 4 5 | 0 0 | 1 2 3 0 | 0 0 | 0 0 0 0
+clear{ [[-]>[-]>[-]>[-]>+>>]<<[[-]<<<<<<]>> }
+= 0 0 | `0 0 0 0 | 0 0 | 0 0 0 0 | 0 0 | 0 0 0 0 ~
+test_helpers/clear{ [-]->[-]>[-]>[-]++++++[<++++++[<++++++>-]>-]<<[>[-]<[>+<-]>-]+[[-]<+] }
+
 takes a base 10 ascii number of any length (with gaps for padding) terminated with a 0:
 uses the left padding cells but leaves them zeroed; does not touch right padding cell
 /= 0 * | `A B C D | 0 0 | E F 0 0
