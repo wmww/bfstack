@@ -1,3 +1,0 @@
-[
-use "nope.txt"
-]
