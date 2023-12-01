@@ -680,7 +680,7 @@ mul{
             [ for every 1 in Bc
                 >>>
                 = 0 A1 A2 A3 | 0 0 | B0 B1 B2 B3 | 0 0 | R0 R1 R2 R3 | 0 0 | 0 0 0 _Bc | 0 0 | `B0 B1 B2 B3 | 0 0 | Ac Bc A0 0
-                shift_right{ >>>[-]<[>+<-]<[>+<-]<[>+<-] }
+                word/shift_right{ >>>[-]<[>+<-]<[>+<-]<[>+<-] }
                 = 0 A1 A2 A3 | 0 0 | B0 B1 B2 B3 | 0 0 | R0 R1 R2 R3 | 0 0 | 0 0 0 _Bc | 0 0 | `0 B0 B1 B2 | 0 0 | Ac Bc A0 0
                 <<<-
                 = 0 A1 A2 A3 | 0 0 | B0 B1 B2 B3 | 0 0 | R0 R1 R2 R3 | 0 0 | 0 0 0 `Bc_dec | 0 0 | 0 B0 B1 B2 | 0 0 | Ac Bc A0 0
